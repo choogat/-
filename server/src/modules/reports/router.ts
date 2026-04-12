@@ -12,10 +12,13 @@ reportsRouter.get(
   "/dashboard",
   ah(async (_req, res) => {
     const period = dayjs().format("YYYY-MM");
+    const today = dayjs().format("YYYY-MM-DD");
     const monthStart = dayjs().startOf("month").toDate();
     const monthEnd = dayjs().endOf("month").toDate();
+    const dayStart = dayjs().startOf("day").toDate();
+    const dayEnd = dayjs().endOf("day").toDate();
 
-    const [payments, expenses, locks, occupied, overdue, assets] = await Promise.all([
+    const [payments, expenses, locks, occupied, overdue, assets, dailyPay, dailyExp] = await Promise.all([
       prisma.payment.aggregate({
         _sum: { amount: true },
         where: { paidAt: { gte: monthStart, lte: monthEnd } },
@@ -31,13 +34,27 @@ reportsRouter.get(
         where: { status: { in: [InvoiceStatus.PENDING, InvoiceStatus.OVERDUE, InvoiceStatus.PARTIAL] } },
       }),
       prisma.asset.aggregate({ _sum: { currentValue: true } }),
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { paidAt: { gte: dayStart, lte: dayEnd } },
+      }),
+      prisma.expense.aggregate({
+        _sum: { amount: true },
+        where: { date: { gte: dayStart, lte: dayEnd } },
+      }),
     ]);
 
     const income = payments._sum.amount ?? 0;
     const expense = expenses._sum.amount ?? 0;
+    const dailyIncome = dailyPay._sum.amount ?? 0;
+    const dailyExpense = dailyExp._sum.amount ?? 0;
 
     res.json({
       period,
+      today,
+      dailyIncome,
+      dailyExpense,
+      dailyNet: dailyIncome - dailyExpense,
       monthlyIncome: income,
       monthlyExpense: expense,
       monthlyNet: income - expense,

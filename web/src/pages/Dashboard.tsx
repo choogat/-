@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import { TrendingUp, TrendingDown, Store, AlertCircle, Building2, Percent } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, Building2, Percent } from "lucide-react";
 
 const fmt = (n: number) => n.toLocaleString("th-TH", { maximumFractionDigits: 0 });
 
@@ -31,6 +31,21 @@ export default function Dashboard() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">แดชบอร์ด — เดือน {data.period}</h1>
 
+      <div>
+        <h2 className="text-lg font-semibold mb-2 text-slate-600">วันนี้ ({data.today})</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <KPI label="รายรับวันนี้" value={`฿${fmt(data.dailyIncome ?? 0)}`} icon={TrendingUp} color="bg-green-600" />
+          <KPI label="รายจ่ายวันนี้" value={`฿${fmt(data.dailyExpense ?? 0)}`} icon={TrendingDown} color="bg-red-500" />
+          <KPI
+            label="คงเหลือวันนี้"
+            value={`฿${fmt(data.dailyNet ?? 0)}`}
+            icon={TrendingUp}
+            color={(data.dailyNet ?? 0) >= 0 ? "bg-teal-500" : "bg-orange-500"}
+          />
+        </div>
+      </div>
+
+      <h2 className="text-lg font-semibold mb-2 text-slate-600">ภาพรวมเดือน</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <KPI label="รายรับเดือนนี้" value={`฿${fmt(data.monthlyIncome)}`} icon={TrendingUp} color="bg-emerald-500" />
         <KPI label="รายจ่ายเดือนนี้" value={`฿${fmt(data.monthlyExpense)}`} icon={TrendingDown} color="bg-rose-500" />
