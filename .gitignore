@@ -5,3 +5,5 @@ dist/
 .DS_Store
 server/prisma/dev.db*
 server/uploads/
+.env.local
+.vercel
