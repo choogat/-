@@ -1,0 +1,238 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { api } from "../lib/api";
+
+type AssetForm = {
+  code: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  acquireDate: string;
+  costPrice: string;
+  usefulLifeYears: string;
+  location: string;
+};
+
+const emptyForm: AssetForm = {
+  code: "",
+  categoryId: "",
+  name: "",
+  description: "",
+  acquireDate: dayjs().format("YYYY-MM-DD"),
+  costPrice: "",
+  usefulLifeYears: "0",
+  location: "",
+};
+
+export default function Assets() {
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<AssetForm>(emptyForm);
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [search, setSearch] = useState("");
+
+  const { data = [] } = useQuery({
+    queryKey: ["assets"],
+    queryFn: async () => (await api.get("/assets")).data,
+  });
+  const { data: categories = [] } = useQuery({
+    queryKey: ["asset-categories"],
+    queryFn: async () => (await api.get("/assets/categories")).data,
+  });
+
+  const createMut = useMutation({
+    mutationFn: async (payload: any) => (await api.post("/assets", payload)).data,
+    onSuccess: () => {
+      toast.success("เพิ่มทรัพย์สินสำเร็จ");
+      qc.invalidateQueries({ queryKey: ["assets"] });
+      setShowForm(false);
+      setForm(emptyForm);
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.error ?? "เพิ่มไม่สำเร็จ"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: number) => api.delete(`/assets/${id}`),
+    onSuccess: () => {
+      toast.success("ลบแล้ว");
+      qc.invalidateQueries({ queryKey: ["assets"] });
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.error ?? "ลบไม่สำเร็จ"),
+  });
+
+  const s = search.trim().toLowerCase();
+  const filtered = data.filter((a: any) => {
+    if (filterCategory && String(a.categoryId) !== filterCategory) return false;
+    if (filterStatus && a.status !== filterStatus) return false;
+    if (s && ![a.code, a.name, a.location ?? "", a.description ?? ""]
+      .some((v: string) => v.toLowerCase().includes(s))) return false;
+    return true;
+  });
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.code || !form.name || !form.categoryId || !form.costPrice) {
+      toast.error("กรอกข้อมูลให้ครบ");
+      return;
+    }
+    createMut.mutate({
+      code: form.code,
+      categoryId: Number(form.categoryId),
+      name: form.name,
+      description: form.description || undefined,
+      acquireDate: form.acquireDate,
+      costPrice: Number(form.costPrice),
+      usefulLifeYears: Number(form.usefulLifeYears || 0),
+      location: form.location || undefined,
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">ทะเบียนทรัพย์สิน</h1>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => setShowForm((v) => !v)}
+        >
+          {showForm ? "ยกเลิก" : "+ เพิ่มทรัพย์สิน"}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={submit} className="card grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label className="flex flex-col text-sm">
+            รหัส *
+            <input className="border rounded p-2" value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })} />
+          </label>
+          <label className="flex flex-col text-sm">
+            หมวด *
+            <select className="border rounded p-2" value={form.categoryId}
+              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+              <option value="">-- เลือก --</option>
+              {categories.map((c: any) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col text-sm">
+            ชื่อ *
+            <input className="border rounded p-2" value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </label>
+          <label className="flex flex-col text-sm">
+            วันที่ได้มา
+            <input type="date" className="border rounded p-2" value={form.acquireDate}
+              onChange={(e) => setForm({ ...form, acquireDate: e.target.value })} />
+          </label>
+          <label className="flex flex-col text-sm">
+            ราคาทุน (บาท) *
+            <input type="number" step="0.01" className="border rounded p-2" value={form.costPrice}
+              onChange={(e) => setForm({ ...form, costPrice: e.target.value })} />
+          </label>
+          <label className="flex flex-col text-sm">
+            อายุการใช้งาน (ปี)
+            <input type="number" className="border rounded p-2" value={form.usefulLifeYears}
+              onChange={(e) => setForm({ ...form, usefulLifeYears: e.target.value })} />
+          </label>
+          <label className="flex flex-col text-sm">
+            ที่ตั้ง
+            <input className="border rounded p-2" value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })} />
+          </label>
+          <label className="flex flex-col text-sm md:col-span-2">
+            รายละเอียด
+            <input className="border rounded p-2" value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </label>
+          <div className="md:col-span-3">
+            <button type="submit" disabled={createMut.isPending}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">
+              บันทึก
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="card flex flex-wrap gap-3 items-end">
+        <label className="flex flex-col text-sm">
+          ค้นหา
+          <input className="border rounded p-2" placeholder="รหัส / ชื่อ / ที่ตั้ง"
+            value={search} onChange={(e) => setSearch(e.target.value)} />
+        </label>
+        <label className="flex flex-col text-sm">
+          หมวด
+          <select className="border rounded p-2" value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}>
+            <option value="">ทั้งหมด</option>
+            {categories.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col text-sm">
+          สถานะ
+          <select className="border rounded p-2" value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="">ทั้งหมด</option>
+            <option value="IN_USE">ใช้งาน</option>
+            <option value="REPAIR">ซ่อม</option>
+            <option value="DISPOSED">จำหน่ายแล้ว</option>
+          </select>
+        </label>
+        {(filterCategory || filterStatus || search) && (
+          <button className="px-3 py-2 text-sm text-gray-600 underline"
+            onClick={() => { setFilterCategory(""); setFilterStatus(""); setSearch(""); }}>
+            ล้างตัวกรอง
+          </button>
+        )}
+        <div className="ml-auto text-sm text-gray-600 self-center">
+          พบ {filtered.length} / {data.length} รายการ
+        </div>
+      </div>
+
+      <div className="card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-left border-b">
+            <tr>
+              <th className="p-2">รหัส</th><th className="p-2">หมวด</th><th className="p-2">รายการ</th>
+              <th className="p-2">วันที่ได้มา</th><th className="p-2 text-right">ราคาทุน</th>
+              <th className="p-2 text-right">ค่าเสื่อมสะสม</th><th className="p-2 text-right">มูลค่าปัจจุบัน</th>
+              <th className="p-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((a: any) => (
+              <tr key={a.id} className="border-b">
+                <td className="p-2 font-mono">{a.code}</td>
+                <td className="p-2">{a.category.name}</td>
+                <td className="p-2">{a.name}</td>
+                <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
+                <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
+                <td className="p-2 text-right">฿{a.accumulatedDepreciation.toLocaleString()}</td>
+                <td className="p-2 text-right font-medium">฿{a.currentValue.toLocaleString()}</td>
+                <td className="p-2 text-right">
+                  <button
+                    className="text-red-600 hover:underline"
+                    onClick={() => {
+                      if (confirm(`ลบ "${a.name}"?`)) deleteMut.mutate(a.id);
+                    }}
+                  >
+                    ลบ
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan={8} className="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

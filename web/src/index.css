@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { font-family: 'Sarabun', system-ui, sans-serif; }
+
+@layer components {
+  .btn { @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition; }
+  .btn-primary { @apply btn bg-indigo-600 text-white hover:bg-indigo-700; }
+  .btn-ghost { @apply btn hover:bg-slate-100; }
+  .card { @apply bg-white rounded-xl shadow-sm border border-slate-200 p-4; }
+  .input { @apply w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none; }
+  .label { @apply block text-sm font-medium text-slate-700 mb-1; }
+  .badge { @apply inline-flex px-2 py-0.5 rounded-full text-xs font-medium; }
+}

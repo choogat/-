@@ -1,0 +1,326 @@
+// Market Management System — Prisma schema
+// SQLite version (enums → String). สำหรับ PostgreSQL สามารถใช้ enum ได้
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────── Users & Audit ───────────────────────────
+// Role: ADMIN | MANAGER | STAFF | ACCOUNTANT | VIEWER
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String
+  fullName     String
+  role         String    @default("STAFF")
+  email        String?
+  phone        String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  payments      Payment[]
+  otherIncomes  OtherIncome[]
+  expenses      Expense[]
+  auditLogs     AuditLog[]
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entity     String
+  entityId   String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now())
+}
+
+// ─────────────────────────── Market Settings ──────────────────────────
+
+model Setting {
+  key   String @id
+  value String
+}
+
+// ─────────────────────────── Locks & Tenants ──────────────────────────
+// LockStatus: VACANT | OCCUPIED | MAINTENANCE
+// ContractStatus: ACTIVE | ENDED | TERMINATED
+
+model Zone {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String?
+  locks       Lock[]
+}
+
+model Lock {
+  id               Int    @id @default(autoincrement())
+  code             String @unique
+  zoneId           Int
+  zone             Zone   @relation(fields: [zoneId], references: [id])
+  sizeSqm          Float?
+  baseRent         Float  @default(0)
+  baseCommonFee    Float  @default(0)
+  status           String @default("VACANT")
+
+  contracts        LockContract[]
+  waterReadings    WaterMeterReading[]
+  electricReadings ElectricMeterReading[]
+}
+
+model Tenant {
+  id           Int      @id @default(autoincrement())
+  citizenId    String?  @unique
+  fullName     String
+  phone        String?
+  address      String?
+  productType  String?
+  startDate    DateTime?
+  endDate      DateTime?
+  status       String   @default("ACTIVE")
+  note         String?
+  createdAt    DateTime @default(now())
+
+  contracts    LockContract[]
+}
+
+model LockContract {
+  id            Int       @id @default(autoincrement())
+  lockId        Int
+  lock          Lock      @relation(fields: [lockId], references: [id])
+  tenantId      Int
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  startDate     DateTime
+  endDate       DateTime?
+  rentAmount    Float
+  commonFee     Float
+  depositAmount Float     @default(0)
+  status        String    @default("ACTIVE")
+  note          String?
+
+  invoices      Invoice[]
+}
+
+// ─────────────────────────── Invoice & Payment ────────────────────────
+// InvoiceType: RENT | COMMON | WATER | ELECTRIC | OTHER
+// InvoiceStatus: PENDING | PAID | OVERDUE | PARTIAL | CANCELLED
+// PaymentMethod: CASH | TRANSFER | QR | OTHER
+
+model Invoice {
+  id         Int           @id @default(autoincrement())
+  invoiceNo  String        @unique
+  contractId Int?
+  contract   LockContract? @relation(fields: [contractId], references: [id])
+  type       String
+  period     String // YYYY-MM
+  issuedAt   DateTime      @default(now())
+  dueDate    DateTime
+  amount     Float
+  paidAmount Float         @default(0)
+  status     String        @default("PENDING")
+  paidAt     DateTime?
+  note       String?
+
+  items           InvoiceItem[]
+  payments        Payment[]
+  waterReading    WaterMeterReading?
+  electricReading ElectricMeterReading?
+}
+
+model InvoiceItem {
+  id          Int     @id @default(autoincrement())
+  invoiceId   Int
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float
+  amount      Float
+}
+
+model Payment {
+  id               Int      @id @default(autoincrement())
+  invoiceId        Int
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id])
+  amount           Float
+  method           String   @default("CASH")
+  paidAt           DateTime @default(now())
+  receivedByUserId Int?
+  receivedBy       User?    @relation(fields: [receivedByUserId], references: [id])
+  receiptNo        String?
+  note             String?
+}
+
+model WaterMeterReading {
+  id          Int      @id @default(autoincrement())
+  lockId      Int
+  lock        Lock     @relation(fields: [lockId], references: [id])
+  readingDate DateTime
+  period      String // YYYY-MM
+  meterStart  Float
+  meterEnd    Float
+  unitsUsed   Float
+  ratePerUnit Float
+  totalAmount Float
+  invoiceId   Int?     @unique
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+}
+
+model ElectricMeterReading {
+  id          Int      @id @default(autoincrement())
+  lockId      Int
+  lock        Lock     @relation(fields: [lockId], references: [id])
+  readingDate DateTime
+  period      String // YYYY-MM
+  meterStart  Float
+  meterEnd    Float
+  unitsUsed   Float
+  ratePerUnit Float
+  totalAmount Float
+  invoiceId   Int?     @unique
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+}
+
+model OtherIncome {
+  id               Int      @id @default(autoincrement())
+  date             DateTime
+  category         String
+  description      String?
+  amount           Float
+  receivedByUserId Int?
+  receivedBy       User?    @relation(fields: [receivedByUserId], references: [id])
+  note             String?
+}
+
+// ─────────────────────────── Expenses ─────────────────────────────────
+// ExpenseType: OPERATION | CONSTRUCTION | EVENT | UTILITY | GENERAL
+
+model ExpenseCategory {
+  id       Int       @id @default(autoincrement())
+  code     String    @unique
+  name     String
+  type     String
+  expenses Expense[]
+}
+
+model Expense {
+  id               Int              @id @default(autoincrement())
+  date             DateTime
+  categoryId       Int
+  category         ExpenseCategory  @relation(fields: [categoryId], references: [id])
+  description      String?
+  amount           Float
+  approvedByUserId Int?
+  approvedBy       User?            @relation(fields: [approvedByUserId], references: [id])
+  receiptNo        String?
+  attachmentUrl    String?
+  note             String?
+}
+
+model ConstructionProject {
+  id          Int       @id @default(autoincrement())
+  name        String
+  contractor  String?
+  budget      Float
+  startDate   DateTime?
+  endDate     DateTime?
+  progressPct Float     @default(0)
+  status      String    @default("ACTIVE")
+
+  expenses    ConstructionExpense[]
+}
+
+model ConstructionExpense {
+  id          Int                 @id @default(autoincrement())
+  projectId   Int
+  project     ConstructionProject @relation(fields: [projectId], references: [id])
+  date        DateTime
+  description String
+  amount      Float
+  receiptNo   String?
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  name        String
+  eventDate   DateTime
+  budget      Float
+  description String?
+
+  expenses    EventExpense[]
+  incomes     EventIncome[]
+}
+
+model EventExpense {
+  id          Int    @id @default(autoincrement())
+  eventId     Int
+  event       Event  @relation(fields: [eventId], references: [id])
+  subCategory String
+  description String?
+  amount      Float
+}
+
+model EventIncome {
+  id          Int    @id @default(autoincrement())
+  eventId     Int
+  event       Event  @relation(fields: [eventId], references: [id])
+  description String
+  amount      Float
+}
+
+model UtilityBill {
+  id               Int       @id @default(autoincrement())
+  period           String    @unique // YYYY-MM
+  electricAmount   Float     @default(0)
+  waterAmount      Float     @default(0)
+  internetAmount   Float     @default(0)
+  garbageAmount    Float     @default(0)
+  wasteWaterAmount Float     @default(0)
+  totalAmount      Float     @default(0)
+  paidAt           DateTime?
+}
+
+// ─────────────────────────── Assets ───────────────────────────────────
+// AssetType: LAND | BUILDING | UTILITY_SYSTEM | EQUIPMENT
+
+model AssetCategory {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  type   String
+  assets Asset[]
+}
+
+model Asset {
+  id                      Int           @id @default(autoincrement())
+  code                    String        @unique
+  categoryId              Int
+  category                AssetCategory @relation(fields: [categoryId], references: [id])
+  name                    String
+  description             String?
+  acquireDate             DateTime
+  costPrice               Float
+  usefulLifeYears         Int           @default(0)
+  depreciationMethod      String        @default("STRAIGHT_LINE")
+  accumulatedDepreciation Float         @default(0)
+  currentValue            Float
+  location                String?
+  status                  String        @default("IN_USE")
+
+  depreciationLogs        AssetDepreciationLog[]
+}
+
+model AssetDepreciationLog {
+  id        Int      @id @default(autoincrement())
+  assetId   Int
+  asset     Asset    @relation(fields: [assetId], references: [id])
+  period    String // YYYY-MM
+  amount    Float
+  bookValue Float
+}
