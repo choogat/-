@@ -41,7 +41,7 @@ contractsRouter.post(
           startDate: new Date(body.startDate),
           endDate: body.endDate ? new Date(body.endDate) : null,
           status: ContractStatus.ACTIVE,
-        },
+        } as any,
       });
       await tx.lock.update({ where: { id: body.lockId }, data: { status: LockStatus.OCCUPIED } });
       return c;

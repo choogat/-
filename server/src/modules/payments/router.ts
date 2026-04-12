@@ -26,7 +26,7 @@ paymentsRouter.post(
       const inv = await tx.invoice.findUnique({ where: { id: body.invoiceId } });
       if (!inv) throw new Error("InvoiceNotFound");
       const payment = await tx.payment.create({
-        data: { ...body, receivedByUserId: req.user!.id },
+        data: { ...body, receivedByUserId: req.user!.id } as any,
       });
       const paid = inv.paidAmount + body.amount;
       const status =

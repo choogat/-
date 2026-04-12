@@ -49,7 +49,7 @@ expensesRouter.post(
       })
       .parse(req.body);
     const item = await prisma.expense.create({
-      data: { ...body, date: new Date(body.date), approvedByUserId: req.user!.id },
+      data: { ...body, date: new Date(body.date), approvedByUserId: req.user!.id } as any,
     });
     res.status(201).json(item);
   })
