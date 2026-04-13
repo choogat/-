@@ -98,9 +98,13 @@ export default function UtilityBills() {
     }
   }
 
-  const del = useMutation({
-    mutationFn: async (id: number) =>
-      (await api.delete(`/utility-ledger/${id}`)).data,
+  const delPeriod = useMutation({
+    mutationFn: async (period: string) => {
+      const ids = (ledger as any[])
+        .filter((l) => l.period === period)
+        .map((l) => l.id);
+      await Promise.all(ids.map((id) => api.delete(`/utility-ledger/${id}`)));
+    },
     onSuccess: () => {
       toast.success("ลบแล้ว");
       qc.invalidateQueries({ queryKey: ["utility-ledger"] });
@@ -167,11 +171,12 @@ export default function UtilityBills() {
               <th className="p-2 text-right">รายรับค่าน้ำค่าไฟ</th>
               <th className="p-2 text-right">รายจ่ายค่าน้ำค่าไฟ</th>
               <th className="p-2 text-right">คงเหลือ</th>
+              <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
             {periods.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={5}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={6}>ไม่มีข้อมูล</td></tr>
             )}
             {periods.map((p) => {
               const inc = incomeByPeriod.get(p) ?? 0;
@@ -180,34 +185,27 @@ export default function UtilityBills() {
               return (
                 <tr key={p} className="border-b align-top">
                   <td className="p-2">{p}</td>
-                  <td className="p-2 text-slate-600">
-                    {(detailsByPeriod.get(p) ?? []).length === 0 ? (
-                      "-"
-                    ) : (
-                      <ul className="space-y-1">
-                        {(detailsByPeriod.get(p) ?? []).map((d, i) => (
-                          <li key={i} className="flex items-center gap-2">
-                            <span>{d.text}</span>
-                            {d.id !== null && (
-                              <button
-                                type="button"
-                                className="text-rose-500 hover:text-rose-700 text-xs"
-                                onClick={() => {
-                                  if (confirm("ลบรายการนี้?")) del.mutate(d.id!);
-                                }}
-                              >
-                                ลบ
-                              </button>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                  <td className="p-2 text-slate-600 whitespace-pre-line">
+                    {(detailsByPeriod.get(p) ?? []).map((d) => d.text).join("\n") || "-"}
                   </td>
                   <td className="p-2 text-right text-emerald-600">฿{inc.toLocaleString()}</td>
                   <td className="p-2 text-right text-rose-600">฿{exp.toLocaleString()}</td>
                   <td className={`p-2 text-right font-semibold ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     ฿{diff.toLocaleString()}
+                  </td>
+                  <td className="p-2 text-right">
+                    {(ledger as any[]).some((l) => l.period === p) && (
+                      <button
+                        type="button"
+                        className="text-rose-600 hover:text-rose-800 text-xs"
+                        onClick={() => {
+                          if (confirm(`ลบข้อมูลทั้งหมดของเดือน ${p}?`))
+                            delPeriod.mutate(p);
+                        }}
+                      >
+                        ลบ
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -221,6 +219,7 @@ export default function UtilityBills() {
               <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                 ฿{net.toLocaleString()}
               </td>
+              <td className="p-2"></td>
             </tr>
           </tfoot>
         </table>
