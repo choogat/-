@@ -94,6 +94,29 @@ constructionRouter.delete(
   })
 );
 
+// ── All installments (flat list with project info) ─────────
+constructionRouter.get(
+  "/installments",
+  ah(async (_req, res) => {
+    const items = await prisma.constructionExpense.findMany({
+      include: { project: true },
+      orderBy: { date: "desc" },
+    });
+    res.json(
+      items.map((i) => ({
+        id: i.id,
+        projectId: i.projectId,
+        projectName: i.project.name,
+        contractor: i.project.contractor,
+        date: i.date,
+        description: i.description,
+        amount: i.amount,
+        receiptNo: i.receiptNo,
+      }))
+    );
+  })
+);
+
 // ── Installments (งวดการจ่าย) ───────────────────────────────
 constructionRouter.get(
   "/projects/:id/installments",
