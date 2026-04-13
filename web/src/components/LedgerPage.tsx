@@ -9,9 +9,10 @@ type Mode = "INCOME" | "EXPENSE";
 type Props = {
   title: string;
   ledgerType: string; // utilityType value used as discriminator
+  showPartyFilter?: boolean;
 };
 
-export default function LedgerPage({ title, ledgerType }: Props) {
+export default function LedgerPage({ title, ledgerType, showPartyFilter }: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
   const { data: ledger = [] } = useQuery({
@@ -74,6 +75,7 @@ export default function LedgerPage({ title, ledgerType }: Props) {
       id: l.id,
       period: l.period,
       date: dayjs(l.date).format("YYYY-MM-DD"),
+      party: l.party as string,
       detail: `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
       income: l.kind === "INCOME" ? l.amount : 0,
       expense: l.kind === "EXPENSE" ? l.amount : 0,
@@ -84,7 +86,13 @@ export default function LedgerPage({ title, ledgerType }: Props) {
     new Set([dayjs().format("YYYY-MM"), ...rows.map((r) => r.period)])
   ).sort((a, b) => b.localeCompare(a));
   const [filterMonth, setFilterMonth] = useState<string>(dayjs().format("YYYY-MM"));
-  const visibleRows = filterMonth ? rows.filter((r) => r.period === filterMonth) : rows;
+  const [filterParty, setFilterParty] = useState<string>("");
+  const allParties = Array.from(new Set(rows.map((r) => r.party).filter(Boolean))).sort();
+  const visibleRows = rows.filter(
+    (r) =>
+      (!filterMonth || r.period === filterMonth) &&
+      (!filterParty || r.party === filterParty)
+  );
 
   const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
   const totalExpense = visibleRows.reduce((s, r) => s + r.expense, 0);
@@ -122,8 +130,29 @@ export default function LedgerPage({ title, ledgerType }: Props) {
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
-        {filterMonth && (
-          <button className="btn-secondary" onClick={() => setFilterMonth("")}>
+        {showPartyFilter && (
+          <>
+            <label className="label mb-0 ml-2">ผู้จ่าย</label>
+            <select
+              className="input max-w-xs"
+              value={filterParty}
+              onChange={(e) => setFilterParty(e.target.value)}
+            >
+              <option value="">ทั้งหมด</option>
+              {allParties.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </>
+        )}
+        {(filterMonth || filterParty) && (
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              setFilterMonth("");
+              setFilterParty("");
+            }}
+          >
             ล้างตัวกรอง
           </button>
         )}
