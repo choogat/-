@@ -150,7 +150,6 @@ export default function LedgerPage({ title, ledgerType }: Props) {
         <table className="w-full text-sm">
           <thead className="text-left border-b">
             <tr>
-              <th className="p-2">เดือน</th>
               <th className="p-2">วันที่</th>
               <th className="p-2">รายละเอียด</th>
               <th className="p-2 text-right">รายรับ</th>
@@ -161,13 +160,12 @@ export default function LedgerPage({ title, ledgerType }: Props) {
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={7}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={6}>ไม่มีข้อมูล</td></tr>
             )}
             {visibleRows.map((r) => {
               const diff = r.income - r.expense;
               return (
                 <tr key={r.id} className="border-b align-top">
-                  <td className="p-2">{r.period}</td>
                   <td className="p-2">{r.date}</td>
                   <td className="p-2 text-slate-600">{r.detail}</td>
                   <td className="p-2 text-right text-emerald-600">
@@ -196,7 +194,7 @@ export default function LedgerPage({ title, ledgerType }: Props) {
           </tbody>
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
-              <td className="p-2" colSpan={3}>รวมทั้งหมด</td>
+              <td className="p-2" colSpan={2}>รวมทั้งหมด</td>
               <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
               <td className="p-2 text-right text-rose-600">฿{totalExpense.toLocaleString()}</td>
               <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
