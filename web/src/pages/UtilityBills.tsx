@@ -1,7 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import toast from "react-hot-toast";
 import { api } from "../lib/api";
 
 export default function UtilityBills() {
+  const qc = useQueryClient();
   const { data: bills = [] } = useQuery({
     queryKey: ["utility-bills"],
     queryFn: async () => (await api.get("/expenses/utility-bills")).data,
@@ -9,6 +13,38 @@ export default function UtilityBills() {
   const { data: waterInvoices = [] } = useQuery({
     queryKey: ["invoices", "WATER"],
     queryFn: async () => (await api.get("/invoices", { params: {} })).data,
+  });
+
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    period: dayjs().format("YYYY-MM"),
+    electricAmount: 0,
+    waterAmount: 0,
+    note: "",
+  });
+
+  const save = useMutation({
+    mutationFn: async () =>
+      (
+        await api.post("/expenses/utility-bills", {
+          period: form.period,
+          electricAmount: Number(form.electricAmount) || 0,
+          waterAmount: Number(form.waterAmount) || 0,
+          note: form.note || undefined,
+        })
+      ).data,
+    onSuccess: () => {
+      toast.success("บันทึกค่าน้ำค่าไฟแล้ว");
+      qc.invalidateQueries({ queryKey: ["utility-bills"] });
+      setOpen(false);
+      setForm({
+        period: dayjs().format("YYYY-MM"),
+        electricAmount: 0,
+        waterAmount: 0,
+        note: "",
+      });
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? "บันทึกไม่สำเร็จ"),
   });
 
   const incomeByPeriod = new Map<string, number>();
@@ -35,7 +71,12 @@ export default function UtilityBills() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">ค่าน้ำค่าไฟ</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">ค่าน้ำค่าไฟ</h1>
+        <button className="btn-primary" onClick={() => setOpen(true)}>
+          + เพิ่มข้อมูลรายรับรายจ่ายค่าน้ำค่าไฟ
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="card">
@@ -100,6 +141,82 @@ export default function UtilityBills() {
           </tfoot>
         </table>
       </div>
+
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-md p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">เพิ่มข้อมูลค่าน้ำค่าไฟ</h2>
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save.mutate();
+              }}
+            >
+              <div>
+                <label className="label">งวด (YYYY-MM)</label>
+                <input
+                  type="month"
+                  className="input"
+                  value={form.period}
+                  onChange={(e) => setForm({ ...form, period: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">ค่าไฟ (บาท)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="input"
+                  value={form.electricAmount}
+                  onChange={(e) =>
+                    setForm({ ...form, electricAmount: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div>
+                <label className="label">ค่าน้ำ (บาท)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="input"
+                  value={form.waterAmount}
+                  onChange={(e) =>
+                    setForm({ ...form, waterAmount: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div>
+                <label className="label">หมายเหตุ</label>
+                <input
+                  className="input"
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setOpen(false)}
+                >
+                  ยกเลิก
+                </button>
+                <button className="btn-primary" disabled={save.isPending}>
+                  {save.isPending ? "กำลังบันทึก..." : "บันทึก"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
