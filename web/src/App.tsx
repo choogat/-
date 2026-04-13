@@ -12,6 +12,8 @@ import ElectricReadings from "./pages/ElectricReadings";
 import Expenses from "./pages/Expenses";
 import IncomeExpense from "./pages/IncomeExpense";
 import UtilityBills from "./pages/UtilityBills";
+import RecurringExpenses from "./pages/RecurringExpenses";
+import EventExpenses from "./pages/EventExpenses";
 import Assets from "./pages/Assets";
 import ReportDaily from "./pages/ReportDaily";
 import ReportMonthly from "./pages/ReportMonthly";
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="expenses" element={<Expenses />} />
           <Route path="income-expense" element={<IncomeExpense />} />
           <Route path="utility-bills" element={<UtilityBills />} />
+          <Route path="recurring-expenses" element={<RecurringExpenses />} />
+          <Route path="event-expenses" element={<EventExpenses />} />
           <Route path="assets" element={<Assets />} />
           <Route path="reports/daily" element={<ReportDaily />} />
           <Route path="reports/monthly" element={<ReportMonthly />} />

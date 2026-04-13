@@ -2,7 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Store, Users, FileText, Receipt,
   Droplet, Zap, Wallet, Building2, BarChart3, AlertCircle, ArrowLeftRight,
-  Settings as SettingsIcon, LogOut, Plug
+  Settings as SettingsIcon, LogOut, Plug, Repeat, PartyPopper
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
@@ -10,6 +10,8 @@ const nav = [
   { to: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
   { to: "/contracts", label: "สัญญาเช่า", icon: FileText },
   { to: "/invoices", label: "ใบแจ้งหนี้", icon: Receipt },
+  { to: "/recurring-expenses", label: "ค่าใช้จ่ายประจำ", icon: Repeat },
+  { to: "/event-expenses", label: "ค่าจัดงานอีเวนต์", icon: PartyPopper },
   { to: "/income-expense", label: "รายรับรายจ่าย", icon: ArrowLeftRight },
   { to: "/utility-bills", label: "ค่าน้ำค่าไฟ", icon: Plug },
   { to: "/assets", label: "ทรัพย์สิน", icon: Building2 },

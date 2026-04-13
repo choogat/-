@@ -11,8 +11,15 @@ utilityLedgerRouter.use(requireAuth);
 
 utilityLedgerRouter.get(
   "/",
-  ah(async (_req, res) => {
+  ah(async (req, res) => {
+    const { utilityType } = req.query as any;
+    const where: any = {};
+    if (utilityType) {
+      const types = String(utilityType).split(",");
+      where.utilityType = { in: types };
+    }
     const items = await (prisma as any).utilityLedger.findMany({
+      where,
       orderBy: { date: "desc" },
     });
     res.json(items);
@@ -27,7 +34,7 @@ utilityLedgerRouter.post(
       .object({
         date: z.string(),
         kind: z.enum(["INCOME", "EXPENSE"]),
-        utilityType: z.enum(["WATER", "ELECTRIC"]),
+        utilityType: z.string().min(1),
         party: z.string().min(1),
         amount: z.number().positive(),
         note: z.string().optional(),

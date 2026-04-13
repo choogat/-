@@ -6,36 +6,23 @@ import { api } from "../lib/api";
 
 type Mode = "INCOME" | "EXPENSE";
 
-type Row = {
-  key: string;
-  period: string;
-  detail: string;
-  income: number;
-  expense: number;
-  ledgerId: number | null;
-  sortDate: string;
+type Props = {
+  title: string;
+  ledgerType: string; // utilityType value used as discriminator
 };
 
-export default function UtilityBills() {
+export default function LedgerPage({ title, ledgerType }: Props) {
   const qc = useQueryClient();
-  const { data: bills = [] } = useQuery({
-    queryKey: ["utility-bills"],
-    queryFn: async () => (await api.get("/expenses/utility-bills")).data,
-  });
-  const { data: waterInvoices = [] } = useQuery({
-    queryKey: ["invoices", "WATER"],
-    queryFn: async () => (await api.get("/invoices", { params: {} })).data,
-  });
+  const queryKey = ["utility-ledger", ledgerType];
   const { data: ledger = [] } = useQuery({
-    queryKey: ["utility-ledger", "WATER,ELECTRIC"],
+    queryKey,
     queryFn: async () =>
-      (await api.get("/utility-ledger", { params: { utilityType: "WATER,ELECTRIC" } })).data,
+      (await api.get("/utility-ledger", { params: { utilityType: ledgerType } })).data,
   });
 
   const [mode, setMode] = useState<Mode | null>(null);
   const [form, setForm] = useState({
     date: dayjs().format("YYYY-MM-DD"),
-    utilityType: "WATER" as "WATER" | "ELECTRIC",
     party: "",
     amount: 0,
     note: "",
@@ -44,7 +31,6 @@ export default function UtilityBills() {
   const resetForm = () =>
     setForm({
       date: dayjs().format("YYYY-MM-DD"),
-      utilityType: "WATER",
       party: "",
       amount: 0,
       note: "",
@@ -56,7 +42,7 @@ export default function UtilityBills() {
         await api.post("/utility-ledger", {
           date: form.date,
           kind: mode,
-          utilityType: form.utilityType,
+          utilityType: ledgerType,
           party: form.party,
           amount: Number(form.amount),
           note: form.note || undefined,
@@ -64,7 +50,7 @@ export default function UtilityBills() {
       ).data,
     onSuccess: () => {
       toast.success("บันทึกแล้ว");
-      qc.invalidateQueries({ queryKey: ["utility-ledger"] });
+      qc.invalidateQueries({ queryKey });
       setMode(null);
       resetForm();
     },
@@ -77,75 +63,28 @@ export default function UtilityBills() {
       (await api.delete(`/utility-ledger/${id}`)).data,
     onSuccess: () => {
       toast.success("ลบแล้ว");
-      qc.invalidateQueries({ queryKey: ["utility-ledger"] });
+      qc.invalidateQueries({ queryKey });
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? "ลบไม่สำเร็จ"),
   });
 
-  const rows: Row[] = [];
-
-  const invoiceIncomeByPeriod = new Map<string, number>();
-  for (const inv of waterInvoices as any[]) {
-    if (inv.type !== "WATER" && inv.type !== "ELECTRIC") continue;
-    invoiceIncomeByPeriod.set(
-      inv.period,
-      (invoiceIncomeByPeriod.get(inv.period) ?? 0) + (inv.paidAmount ?? 0)
-    );
-  }
-  for (const [period, amount] of invoiceIncomeByPeriod) {
-    if (!amount) continue;
-    rows.push({
-      key: `inv-${period}`,
-      period,
-      detail: "รายรับจากใบแจ้งหนี้ค่าน้ำ/ค่าไฟ",
-      income: amount,
-      expense: 0,
-      ledgerId: null,
-      sortDate: `${period}-01`,
-    });
-  }
-
-  for (const b of bills as any[]) {
-    const parts: string[] = [];
-    if (b.electricAmount) parts.push(`ค่าไฟ ฿${b.electricAmount.toLocaleString()}`);
-    if (b.waterAmount) parts.push(`ค่าน้ำ ฿${b.waterAmount.toLocaleString()}`);
-    if (!parts.length) continue;
-    rows.push({
-      key: `bill-${b.id}`,
-      period: b.period,
-      detail: parts.join(", "),
-      income: 0,
-      expense: (b.electricAmount ?? 0) + (b.waterAmount ?? 0),
-      ledgerId: null,
-      sortDate: `${b.period}-01`,
-    });
-  }
-
-  for (const l of ledger as any[]) {
-    const utility = l.utilityType === "WATER" ? "ค่าน้ำ" : "ค่าไฟ";
-    const partyLabel = l.kind === "INCOME" ? "จาก" : "ให้";
-    const detail = `${utility} ${partyLabel} ${l.party}${l.note ? ` (${l.note})` : ""}`;
-    rows.push({
-      key: `led-${l.id}`,
+  const rows = (ledger as any[])
+    .map((l) => ({
+      id: l.id,
       period: l.period,
-      detail,
+      date: dayjs(l.date).format("YYYY-MM-DD"),
+      detail: `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
       income: l.kind === "INCOME" ? l.amount : 0,
       expense: l.kind === "EXPENSE" ? l.amount : 0,
-      ledgerId: l.id,
-      sortDate: dayjs(l.date).format("YYYY-MM-DD"),
-    });
-  }
-
-  rows.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
 
   const allMonths = Array.from(new Set(rows.map((r) => r.period))).sort((a, b) =>
     b.localeCompare(a)
   );
   const [filterMonth, setFilterMonth] = useState<string>("");
-  const visibleRows = filterMonth
-    ? rows.filter((r) => r.period === filterMonth)
-    : rows;
+  const visibleRows = filterMonth ? rows.filter((r) => r.period === filterMonth) : rows;
 
   const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
   const totalExpense = visibleRows.reduce((s, r) => s + r.expense, 0);
@@ -154,7 +93,7 @@ export default function UtilityBills() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold">ค่าน้ำค่าไฟ</h1>
+        <h1 className="text-2xl font-bold">{title}</h1>
         <div className="flex gap-2">
           <button
             className="btn-primary bg-emerald-600 hover:bg-emerald-700"
@@ -192,16 +131,12 @@ export default function UtilityBills() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="card">
-          <div className="text-sm text-slate-500">รายรับค่าน้ำค่าไฟรวม</div>
-          <div className="text-2xl font-bold text-emerald-600">
-            ฿{totalIncome.toLocaleString()}
-          </div>
+          <div className="text-sm text-slate-500">รายรับรวม</div>
+          <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
         </div>
         <div className="card">
-          <div className="text-sm text-slate-500">รายจ่ายค่าน้ำค่าไฟรวม</div>
-          <div className="text-2xl font-bold text-rose-600">
-            ฿{totalExpense.toLocaleString()}
-          </div>
+          <div className="text-sm text-slate-500">รายจ่ายรวม</div>
+          <div className="text-2xl font-bold text-rose-600">฿{totalExpense.toLocaleString()}</div>
         </div>
         <div className="card">
           <div className="text-sm text-slate-500">ผลรวมสุทธิ</div>
@@ -216,22 +151,24 @@ export default function UtilityBills() {
           <thead className="text-left border-b">
             <tr>
               <th className="p-2">เดือน</th>
+              <th className="p-2">วันที่</th>
               <th className="p-2">รายละเอียด</th>
-              <th className="p-2 text-right">รายรับค่าน้ำค่าไฟ</th>
-              <th className="p-2 text-right">รายจ่ายค่าน้ำค่าไฟ</th>
+              <th className="p-2 text-right">รายรับ</th>
+              <th className="p-2 text-right">รายจ่าย</th>
               <th className="p-2 text-right">คงเหลือ</th>
               <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={6}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={7}>ไม่มีข้อมูล</td></tr>
             )}
             {visibleRows.map((r) => {
               const diff = r.income - r.expense;
               return (
-                <tr key={r.key} className="border-b align-top">
+                <tr key={r.id} className="border-b align-top">
                   <td className="p-2">{r.period}</td>
+                  <td className="p-2">{r.date}</td>
                   <td className="p-2 text-slate-600">{r.detail}</td>
                   <td className="p-2 text-right text-emerald-600">
                     {r.income ? `฿${r.income.toLocaleString()}` : "-"}
@@ -243,17 +180,15 @@ export default function UtilityBills() {
                     ฿{diff.toLocaleString()}
                   </td>
                   <td className="p-2 text-right">
-                    {r.ledgerId !== null && (
-                      <button
-                        type="button"
-                        className="text-rose-600 hover:text-rose-800 text-xs"
-                        onClick={() => {
-                          if (confirm("ลบรายการนี้?")) del.mutate(r.ledgerId!);
-                        }}
-                      >
-                        ลบ
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="text-rose-600 hover:text-rose-800 text-xs"
+                      onClick={() => {
+                        if (confirm("ลบรายการนี้?")) del.mutate(r.id);
+                      }}
+                    >
+                      ลบ
+                    </button>
                   </td>
                 </tr>
               );
@@ -261,7 +196,7 @@ export default function UtilityBills() {
           </tbody>
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
-              <td className="p-2" colSpan={2}>รวมทั้งหมด</td>
+              <td className="p-2" colSpan={3}>รวมทั้งหมด</td>
               <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
               <td className="p-2 text-right text-rose-600">฿{totalExpense.toLocaleString()}</td>
               <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
@@ -283,7 +218,7 @@ export default function UtilityBills() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">
-              {mode === "INCOME" ? "เพิ่มรายได้ค่าน้ำค่าไฟ" : "เพิ่มรายจ่ายค่าน้ำค่าไฟ"}
+              {mode === "INCOME" ? `เพิ่มรายได้ ${title}` : `เพิ่มรายจ่าย ${title}`}
             </h2>
             <form
               className="space-y-3"
@@ -303,19 +238,6 @@ export default function UtilityBills() {
                 />
               </div>
               <div>
-                <label className="label">ประเภท</label>
-                <select
-                  className="input"
-                  value={form.utilityType}
-                  onChange={(e) =>
-                    setForm({ ...form, utilityType: e.target.value as any })
-                  }
-                >
-                  <option value="WATER">ค่าน้ำ</option>
-                  <option value="ELECTRIC">ค่าไฟ</option>
-                </select>
-              </div>
-              <div>
                 <label className="label">
                   {mode === "INCOME" ? "ผู้จ่าย/ที่มา" : "ผู้รับเงิน/ที่จ่าย"}
                 </label>
@@ -333,9 +255,7 @@ export default function UtilityBills() {
                   step="0.01"
                   className="input"
                   value={form.amount}
-                  onChange={(e) =>
-                    setForm({ ...form, amount: Number(e.target.value) })
-                  }
+                  onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
                   required
                 />
               </div>
