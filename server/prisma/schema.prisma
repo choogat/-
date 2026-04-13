@@ -275,6 +275,18 @@ model EventIncome {
   amount      Float
 }
 
+model UtilityLedger {
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  period       String   // YYYY-MM
+  kind         String   // INCOME | EXPENSE
+  utilityType  String   // WATER | ELECTRIC
+  party        String   // รับจาก / จ่ายไป
+  amount       Float
+  note         String?
+  createdAt    DateTime @default(now())
+}
+
 model UtilityBill {
   id               Int       @id @default(autoincrement())
   period           String    @unique // YYYY-MM

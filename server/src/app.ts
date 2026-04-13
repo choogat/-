@@ -16,6 +16,7 @@ import { expensesRouter } from "./modules/expenses/router.js";
 import { assetsRouter } from "./modules/assets/router.js";
 import { reportsRouter } from "./modules/reports/router.js";
 import { settingsRouter } from "./modules/settings/router.js";
+import { utilityLedgerRouter } from "./modules/utilityLedger/router.js";
 
 export const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN?.split(",") ?? "*", credentials: true }));
@@ -37,6 +38,7 @@ app.use("/api/expenses", expensesRouter);
 app.use("/api/assets", assetsRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/settings", settingsRouter);
+app.use("/api/utility-ledger", utilityLedgerRouter);
 
 app.use(errorHandler);
 
