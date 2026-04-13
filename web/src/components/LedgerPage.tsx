@@ -12,6 +12,8 @@ type Props = {
   showPartyFilter?: boolean;
   hideIncome?: boolean;
   expenseLabel?: string;
+  categoryOptions?: string[];
+  categoryLabel?: string;
 };
 
 export default function LedgerPage({
@@ -20,6 +22,8 @@ export default function LedgerPage({
   showPartyFilter,
   hideIncome,
   expenseLabel,
+  categoryOptions,
+  categoryLabel,
 }: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
@@ -35,6 +39,7 @@ export default function LedgerPage({
     party: "",
     amount: 0,
     note: "",
+    category: categoryOptions?.[0] ?? "",
   });
 
   const resetForm = () =>
@@ -43,6 +48,7 @@ export default function LedgerPage({
       party: "",
       amount: 0,
       note: "",
+      category: categoryOptions?.[0] ?? "",
     });
 
   const save = useMutation({
@@ -54,7 +60,11 @@ export default function LedgerPage({
           utilityType: ledgerType,
           party: form.party,
           amount: Number(form.amount),
-          note: form.note || undefined,
+          note:
+            [form.category ? `[${form.category}]` : "", form.note]
+              .filter(Boolean)
+              .join(" ")
+              .trim() || undefined,
         })
       ).data,
     onSuccess: () => {
@@ -276,6 +286,21 @@ export default function LedgerPage({
                   required
                 />
               </div>
+              {categoryOptions && categoryOptions.length > 0 && (
+                <div>
+                  <label className="label">{categoryLabel ?? "หมวด"}</label>
+                  <select
+                    className="input"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    required
+                  >
+                    {categoryOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="label">
                   {mode === "INCOME" ? "ผู้จ่าย/ที่มา" : "ผู้รับเงิน/ที่จ่าย"}

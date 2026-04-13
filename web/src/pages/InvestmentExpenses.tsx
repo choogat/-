@@ -7,6 +7,8 @@ export default function InvestmentExpenses() {
       ledgerType="INVESTMENT"
       hideIncome
       expenseLabel="ยอดลงทุน"
+      categoryOptions={["เงินสด", "โครงสร้าง"]}
+      categoryLabel="ประเภท"
     />
   );
 }
