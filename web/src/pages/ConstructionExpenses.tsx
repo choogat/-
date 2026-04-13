@@ -35,6 +35,7 @@ export default function ConstructionExpenses() {
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showAddProject, setShowAddProject] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const projectsQ = useQuery<Project[]>({
     queryKey: ["construction-projects"],
@@ -115,12 +116,7 @@ export default function ConstructionExpenses() {
                       งวดการจ่าย
                     </button>
                     <button
-                      onClick={async () => {
-                        if (!confirm(`ลบโครงการ "${p.name}"?`)) return;
-                        await api.delete(`/construction/projects/${p.id}`);
-                        qc.invalidateQueries({ queryKey: ["construction-projects"] });
-                        toast.success("ลบแล้ว");
-                      }}
+                      onClick={() => setDeleteTarget(p)}
                       className="text-red-600 hover:underline"
                     >
                       ลบ
@@ -146,6 +142,35 @@ export default function ConstructionExpenses() {
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["construction-projects"] });
             setShowAddProject(false);
+          }}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          title="ยืนยันการลบโครงการ"
+          message={
+            <div className="space-y-2">
+              <p>ต้องการลบโครงการต่อไปนี้ใช่หรือไม่?</p>
+              <div className="bg-red-50 border border-red-200 rounded p-3 text-sm space-y-1">
+                <div><span className="text-slate-600">ชื่อโครงการ:</span> <b>{deleteTarget.name}</b></div>
+                {deleteTarget.contractor && (
+                  <div><span className="text-slate-600">ผู้รับเหมา:</span> {deleteTarget.contractor}</div>
+                )}
+                <div><span className="text-slate-600">ยอดรวม:</span> {fmt(deleteTarget.budget)} บาท</div>
+                <div><span className="text-slate-600">จ่ายไปแล้ว:</span> {fmt(deleteTarget.paid)} บาท ({deleteTarget.installmentCount} งวด)</div>
+              </div>
+              <p className="text-red-600 text-sm">
+                ⚠️ งวดการจ่ายทั้งหมดของโครงการนี้จะถูกลบด้วย ไม่สามารถกู้คืนได้
+              </p>
+            </div>
+          }
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={async () => {
+            await api.delete(`/construction/projects/${deleteTarget.id}`);
+            qc.invalidateQueries({ queryKey: ["construction-projects"] });
+            toast.success("ลบโครงการแล้ว");
+            setDeleteTarget(null);
           }}
         />
       )}
@@ -276,6 +301,7 @@ function InstallmentModal({
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
+  const [deleteInst, setDeleteInst] = useState<Installment | null>(null);
 
   const listQ = useQuery<Installment[]>({
     queryKey: ["construction-installments", project.id],
@@ -390,9 +416,7 @@ function InstallmentModal({
                 <td className="p-2">{i.receiptNo ?? "-"}</td>
                 <td className="p-2 text-right">
                   <button
-                    onClick={() => {
-                      if (confirm("ลบงวดนี้?")) del.mutate(i.id);
-                    }}
+                    onClick={() => setDeleteInst(i)}
                     className="text-red-600 hover:underline"
                   >
                     ลบ
@@ -410,7 +434,84 @@ function InstallmentModal({
           </tbody>
         </table>
       </div>
+
+      {deleteInst && (
+        <ConfirmDeleteModal
+          title="ยืนยันการลบงวดการจ่าย"
+          message={
+            <div className="space-y-2">
+              <p>ต้องการลบงวดการจ่ายต่อไปนี้ใช่หรือไม่?</p>
+              <div className="bg-red-50 border border-red-200 rounded p-3 text-sm space-y-1">
+                <div><span className="text-slate-600">วันที่:</span> {fmtDate(deleteInst.date)}</div>
+                <div><span className="text-slate-600">รายละเอียด:</span> <b>{deleteInst.description}</b></div>
+                <div><span className="text-slate-600">จำนวน:</span> {fmt(deleteInst.amount)} บาท</div>
+                {deleteInst.receiptNo && (
+                  <div><span className="text-slate-600">ใบเสร็จ:</span> {deleteInst.receiptNo}</div>
+                )}
+              </div>
+              <p className="text-red-600 text-sm">⚠️ ไม่สามารถกู้คืนได้</p>
+            </div>
+          }
+          onCancel={() => setDeleteInst(null)}
+          onConfirm={async () => {
+            await new Promise<void>((resolve, reject) =>
+              del.mutate(deleteInst.id, { onSuccess: () => resolve(), onError: reject })
+            );
+            setDeleteInst(null);
+          }}
+        />
+      )}
     </Modal>
+  );
+}
+
+function ConfirmDeleteModal({
+  title,
+  message,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  message: React.ReactNode;
+  onCancel: () => void;
+  onConfirm: () => void | Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+        <div className="flex items-center gap-3 p-4 border-b">
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xl">
+            ⚠
+          </div>
+          <h2 className="text-lg font-bold">{title}</h2>
+        </div>
+        <div className="p-4">{message}</div>
+        <div className="flex justify-end gap-2 p-4 border-t bg-slate-50">
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="px-4 py-2 rounded border hover:bg-slate-100"
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await onConfirm();
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? "กำลังลบ..." : "ยืนยันลบ"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
