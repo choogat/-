@@ -299,6 +299,28 @@ model UtilityBill {
   paidAt           DateTime?
 }
 
+model ConstructionContract {
+  id             Int                    @id @default(autoincrement())
+  company        String
+  projectName    String
+  contractAmount Float                  @default(0)
+  startDate      DateTime?
+  note           String?
+  createdAt      DateTime               @default(now())
+  payments       ConstructionPayment[]
+}
+
+model ConstructionPayment {
+  id         Int                  @id @default(autoincrement())
+  contractId Int
+  contract   ConstructionContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  date       DateTime
+  period     String               // YYYY-MM
+  amount     Float
+  note       String?
+  createdAt  DateTime             @default(now())
+}
+
 // ─────────────────────────── Assets ───────────────────────────────────
 // AssetType: LAND | BUILDING | UTILITY_SYSTEM | EQUIPMENT
 
