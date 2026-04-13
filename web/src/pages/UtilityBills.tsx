@@ -4,6 +4,8 @@ import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { api } from "../lib/api";
 
+type Mode = "INCOME" | "EXPENSE";
+
 export default function UtilityBills() {
   const qc = useQueryClient();
   const { data: bills = [] } = useQuery({
@@ -14,37 +16,49 @@ export default function UtilityBills() {
     queryKey: ["invoices", "WATER"],
     queryFn: async () => (await api.get("/invoices", { params: {} })).data,
   });
+  const { data: ledger = [] } = useQuery({
+    queryKey: ["utility-ledger"],
+    queryFn: async () => (await api.get("/utility-ledger")).data,
+  });
 
-  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<Mode | null>(null);
   const [form, setForm] = useState({
-    period: dayjs().format("YYYY-MM"),
-    electricAmount: 0,
-    waterAmount: 0,
+    date: dayjs().format("YYYY-MM-DD"),
+    utilityType: "WATER" as "WATER" | "ELECTRIC",
+    party: "",
+    amount: 0,
     note: "",
   });
+
+  const resetForm = () =>
+    setForm({
+      date: dayjs().format("YYYY-MM-DD"),
+      utilityType: "WATER",
+      party: "",
+      amount: 0,
+      note: "",
+    });
 
   const save = useMutation({
     mutationFn: async () =>
       (
-        await api.post("/expenses/utility-bills", {
-          period: form.period,
-          electricAmount: Number(form.electricAmount) || 0,
-          waterAmount: Number(form.waterAmount) || 0,
+        await api.post("/utility-ledger", {
+          date: form.date,
+          kind: mode,
+          utilityType: form.utilityType,
+          party: form.party,
+          amount: Number(form.amount),
           note: form.note || undefined,
         })
       ).data,
     onSuccess: () => {
-      toast.success("บันทึกค่าน้ำค่าไฟแล้ว");
-      qc.invalidateQueries({ queryKey: ["utility-bills"] });
-      setOpen(false);
-      setForm({
-        period: dayjs().format("YYYY-MM"),
-        electricAmount: 0,
-        waterAmount: 0,
-        note: "",
-      });
+      toast.success("บันทึกแล้ว");
+      qc.invalidateQueries({ queryKey: ["utility-ledger"] });
+      setMode(null);
+      resetForm();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? "บันทึกไม่สำเร็จ"),
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? "บันทึกไม่สำเร็จ"),
   });
 
   const incomeByPeriod = new Map<string, number>();
@@ -61,6 +75,11 @@ export default function UtilityBills() {
     expenseByPeriod.set(b.period, (b.electricAmount ?? 0) + (b.waterAmount ?? 0));
   }
 
+  for (const l of ledger as any[]) {
+    const m = l.kind === "INCOME" ? incomeByPeriod : expenseByPeriod;
+    m.set(l.period, (m.get(l.period) ?? 0) + (l.amount ?? 0));
+  }
+
   const periods = Array.from(
     new Set([...incomeByPeriod.keys(), ...expenseByPeriod.keys()])
   ).sort((a, b) => b.localeCompare(a));
@@ -71,11 +90,22 @@ export default function UtilityBills() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold">ค่าน้ำค่าไฟ</h1>
-        <button className="btn-primary" onClick={() => setOpen(true)}>
-          + เพิ่มข้อมูลรายรับรายจ่ายค่าน้ำค่าไฟ
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="btn-primary bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => setMode("INCOME")}
+          >
+            + เพิ่มรายได้
+          </button>
+          <button
+            className="btn-primary bg-rose-600 hover:bg-rose-700"
+            onClick={() => setMode("EXPENSE")}
+          >
+            + เพิ่มรายจ่าย
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -142,16 +172,18 @@ export default function UtilityBills() {
         </table>
       </div>
 
-      {open && (
+      {mode && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-          onClick={() => setOpen(false)}
+          onClick={() => setMode(null)}
         >
           <div
             className="bg-white rounded-lg shadow-xl w-full max-w-md p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-bold mb-4">เพิ่มข้อมูลค่าน้ำค่าไฟ</h2>
+            <h2 className="text-lg font-bold mb-4">
+              {mode === "INCOME" ? "เพิ่มรายได้ค่าน้ำค่าไฟ" : "เพิ่มรายจ่ายค่าน้ำค่าไฟ"}
+            </h2>
             <form
               className="space-y-3"
               onSubmit={(e) => {
@@ -160,37 +192,50 @@ export default function UtilityBills() {
               }}
             >
               <div>
-                <label className="label">งวด (YYYY-MM)</label>
+                <label className="label">วันที่</label>
                 <input
-                  type="month"
+                  type="date"
                   className="input"
-                  value={form.period}
-                  onChange={(e) => setForm({ ...form, period: e.target.value })}
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
                   required
                 />
               </div>
               <div>
-                <label className="label">ค่าไฟ (บาท)</label>
-                <input
-                  type="number"
-                  step="0.01"
+                <label className="label">ประเภท</label>
+                <select
                   className="input"
-                  value={form.electricAmount}
+                  value={form.utilityType}
                   onChange={(e) =>
-                    setForm({ ...form, electricAmount: Number(e.target.value) })
+                    setForm({ ...form, utilityType: e.target.value as any })
                   }
+                >
+                  <option value="WATER">ค่าน้ำ</option>
+                  <option value="ELECTRIC">ค่าไฟ</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">
+                  {mode === "INCOME" ? "ผู้จ่าย/ที่มา" : "ผู้รับเงิน/ที่จ่าย"}
+                </label>
+                <input
+                  className="input"
+                  value={form.party}
+                  onChange={(e) => setForm({ ...form, party: e.target.value })}
+                  required
                 />
               </div>
               <div>
-                <label className="label">ค่าน้ำ (บาท)</label>
+                <label className="label">จำนวนเงิน (บาท)</label>
                 <input
                   type="number"
                   step="0.01"
                   className="input"
-                  value={form.waterAmount}
+                  value={form.amount}
                   onChange={(e) =>
-                    setForm({ ...form, waterAmount: Number(e.target.value) })
+                    setForm({ ...form, amount: Number(e.target.value) })
                   }
+                  required
                 />
               </div>
               <div>
@@ -205,11 +250,18 @@ export default function UtilityBills() {
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setMode(null)}
                 >
                   ยกเลิก
                 </button>
-                <button className="btn-primary" disabled={save.isPending}>
+                <button
+                  className={`btn-primary ${
+                    mode === "INCOME"
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : "bg-rose-600 hover:bg-rose-700"
+                  }`}
+                  disabled={save.isPending}
+                >
                   {save.isPending ? "กำลังบันทึก..." : "บันทึก"}
                 </button>
               </div>
