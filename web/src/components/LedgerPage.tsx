@@ -17,6 +17,14 @@ type Props = {
   partyLabel?: string;
   defaultAllMonths?: boolean;
   showPartyColumn?: boolean;
+  extraRows?: Array<{
+    period: string;
+    date: string;
+    detail: string;
+    income: number;
+    expense: number;
+    sortPriority?: number;
+  }>;
 };
 
 export default function LedgerPage({
@@ -30,6 +38,7 @@ export default function LedgerPage({
   partyLabel,
   defaultAllMonths,
   showPartyColumn,
+  extraRows,
 }: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
@@ -95,24 +104,41 @@ export default function LedgerPage({
       toast.error(e?.response?.data?.message ?? "ลบไม่สำเร็จ"),
   });
 
-  const rows = (ledger as any[])
-    .map((l) => {
-      const m = (l.note ?? "").match(/^\[([^\]]+)\]\s*(.*)$/);
-      const category = m ? m[1] : "";
-      return {
-        id: l.id,
-        period: l.period,
-        date: dayjs(l.date).format("YYYY-MM-DD"),
-        party: l.party as string,
-        category,
-        detail: showPartyColumn
-          ? (l.note ?? "")
-          : `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
-        income: l.kind === "INCOME" ? l.amount : 0,
-        expense: l.kind === "EXPENSE" ? l.amount : 0,
-      };
-    })
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const ledgerRows = (ledger as any[]).map((l) => {
+    const m = (l.note ?? "").match(/^\[([^\]]+)\]\s*(.*)$/);
+    const category = m ? m[1] : "";
+    return {
+      id: l.id as number,
+      period: l.period as string,
+      date: dayjs(l.date).format("YYYY-MM-DD"),
+      party: l.party as string,
+      category,
+      detail: showPartyColumn
+        ? (l.note ?? "")
+        : `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
+      income: l.kind === "INCOME" ? l.amount : 0,
+      expense: l.kind === "EXPENSE" ? l.amount : 0,
+      readonly: false as boolean,
+      sortPriority: 100,
+    };
+  });
+  const extra = (extraRows ?? []).map((r, i) => ({
+    id: -1 - i,
+    period: r.period,
+    date: r.date,
+    party: "",
+    category: "",
+    detail: r.detail,
+    income: r.income,
+    expense: r.expense,
+    readonly: true as boolean,
+    sortPriority: r.sortPriority ?? 0,
+  }));
+  const rows = [...ledgerRows, ...extra].sort((a, b) => {
+    const d = b.date.localeCompare(a.date);
+    if (d !== 0) return d;
+    return a.sortPriority - b.sortPriority;
+  });
 
   const allMonths = Array.from(
     new Set([dayjs().format("YYYY-MM"), ...rows.map((r) => r.period)])
@@ -263,13 +289,15 @@ export default function LedgerPage({
                     ฿{diff.toLocaleString()}
                   </td>
                   <td className="p-2 text-right">
-                    <button
-                      type="button"
-                      className="text-rose-600 hover:text-rose-800 text-xs"
-                      onClick={() => setConfirmDelId(r.id)}
-                    >
-                      ลบ
-                    </button>
+                    {!r.readonly && (
+                      <button
+                        type="button"
+                        className="text-rose-600 hover:text-rose-800 text-xs"
+                        onClick={() => setConfirmDelId(r.id)}
+                      >
+                        ลบ
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
