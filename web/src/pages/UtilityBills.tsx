@@ -75,15 +75,16 @@ export default function UtilityBills() {
     expenseByPeriod.set(b.period, (b.electricAmount ?? 0) + (b.waterAmount ?? 0));
   }
 
-  const detailsByPeriod = new Map<string, string[]>();
+  type Detail = { id: number | null; text: string };
+  const detailsByPeriod = new Map<string, Detail[]>();
   for (const l of ledger as any[]) {
     const m = l.kind === "INCOME" ? incomeByPeriod : expenseByPeriod;
     m.set(l.period, (m.get(l.period) ?? 0) + (l.amount ?? 0));
     const utility = l.utilityType === "WATER" ? "ค่าน้ำ" : "ค่าไฟ";
     const sign = l.kind === "INCOME" ? "+" : "-";
-    const desc = `${sign}${utility} ${l.party}${l.note ? ` (${l.note})` : ""}`;
+    const text = `${sign}${utility} ${l.party} ฿${(l.amount ?? 0).toLocaleString()}${l.note ? ` (${l.note})` : ""}`;
     const arr = detailsByPeriod.get(l.period) ?? [];
-    arr.push(desc);
+    arr.push({ id: l.id, text });
     detailsByPeriod.set(l.period, arr);
   }
   for (const b of bills as any[]) {
@@ -92,10 +93,21 @@ export default function UtilityBills() {
     if (b.waterAmount) parts.push(`ค่าน้ำ ฿${b.waterAmount.toLocaleString()}`);
     if (parts.length) {
       const arr = detailsByPeriod.get(b.period) ?? [];
-      arr.push(parts.join(", "));
+      arr.push({ id: null, text: parts.join(", ") });
       detailsByPeriod.set(b.period, arr);
     }
   }
+
+  const del = useMutation({
+    mutationFn: async (id: number) =>
+      (await api.delete(`/utility-ledger/${id}`)).data,
+    onSuccess: () => {
+      toast.success("ลบแล้ว");
+      qc.invalidateQueries({ queryKey: ["utility-ledger"] });
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? "ลบไม่สำเร็จ"),
+  });
 
   const periods = Array.from(
     new Set([...incomeByPeriod.keys(), ...expenseByPeriod.keys()])
@@ -168,8 +180,29 @@ export default function UtilityBills() {
               return (
                 <tr key={p} className="border-b align-top">
                   <td className="p-2">{p}</td>
-                  <td className="p-2 text-slate-600 whitespace-pre-line">
-                    {(detailsByPeriod.get(p) ?? []).join("\n") || "-"}
+                  <td className="p-2 text-slate-600">
+                    {(detailsByPeriod.get(p) ?? []).length === 0 ? (
+                      "-"
+                    ) : (
+                      <ul className="space-y-1">
+                        {(detailsByPeriod.get(p) ?? []).map((d, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <span>{d.text}</span>
+                            {d.id !== null && (
+                              <button
+                                type="button"
+                                className="text-rose-500 hover:text-rose-700 text-xs"
+                                onClick={() => {
+                                  if (confirm("ลบรายการนี้?")) del.mutate(d.id!);
+                                }}
+                              >
+                                ลบ
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </td>
                   <td className="p-2 text-right text-emerald-600">฿{inc.toLocaleString()}</td>
                   <td className="p-2 text-right text-rose-600">฿{exp.toLocaleString()}</td>
