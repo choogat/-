@@ -33,6 +33,7 @@ export default function Assets() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [confirmDel, setConfirmDel] = useState<{ id: number; name: string } | null>(null);
 
   const { data = [] } = useQuery({
     queryKey: ["assets"],
@@ -218,9 +219,7 @@ export default function Assets() {
                 <td className="p-2 text-right">
                   <button
                     className="text-red-600 hover:underline"
-                    onClick={() => {
-                      if (confirm(`ลบ "${a.name}"?`)) deleteMut.mutate(a.id);
-                    }}
+                    onClick={() => setConfirmDel({ id: a.id, name: a.name })}
                   >
                     ลบ
                   </button>
@@ -233,6 +232,40 @@ export default function Assets() {
           </tbody>
         </table>
       </div>
+
+      {confirmDel && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setConfirmDel(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-2">ยืนยันการลบ</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              ต้องการลบ "{confirmDel.name}" ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="btn-secondary"
+                onClick={() => setConfirmDel(null)}
+              >
+                ยกเลิก
+              </button>
+              <button
+                className="btn-primary bg-rose-600 hover:bg-rose-700"
+                onClick={() => {
+                  deleteMut.mutate(confirmDel.id);
+                  setConfirmDel(null);
+                }}
+              >
+                ลบ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

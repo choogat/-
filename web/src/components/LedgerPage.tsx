@@ -40,6 +40,7 @@ export default function LedgerPage({
   });
 
   const [mode, setMode] = useState<Mode | null>(null);
+  const [confirmDelId, setConfirmDelId] = useState<number | null>(null);
   const [form, setForm] = useState({
     date: dayjs().format("YYYY-MM-DD"),
     party: "",
@@ -265,9 +266,7 @@ export default function LedgerPage({
                     <button
                       type="button"
                       className="text-rose-600 hover:text-rose-800 text-xs"
-                      onClick={() => {
-                        if (confirm("ลบรายการนี้?")) del.mutate(r.id);
-                      }}
+                      onClick={() => setConfirmDelId(r.id)}
                     >
                       ลบ
                     </button>
@@ -289,6 +288,40 @@ export default function LedgerPage({
           </tfoot>
         </table>
       </div>
+
+      {confirmDelId !== null && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setConfirmDelId(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-2">ยืนยันการลบ</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              ต้องการลบรายการนี้ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="btn-secondary"
+                onClick={() => setConfirmDelId(null)}
+              >
+                ยกเลิก
+              </button>
+              <button
+                className="btn-primary bg-rose-600 hover:bg-rose-700"
+                onClick={() => {
+                  del.mutate(confirmDelId);
+                  setConfirmDelId(null);
+                }}
+              >
+                ลบ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {mode && (
         <div
