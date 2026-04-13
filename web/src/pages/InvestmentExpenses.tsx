@@ -10,7 +10,7 @@ export default function InvestmentExpenses() {
       categoryOptions={["เงินสด", "โครงสร้าง"]}
       categoryLabel="ประเภท"
       showPartyFilter
-      partyLabel="ผู้รับเงิน (ผู้รับเหมา)"
+      partyLabel="ผู้รับเงิน"
       defaultAllMonths
       showPartyColumn
     />
