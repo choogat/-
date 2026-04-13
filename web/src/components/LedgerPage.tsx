@@ -14,6 +14,7 @@ type Props = {
   expenseLabel?: string;
   categoryOptions?: string[];
   categoryLabel?: string;
+  partyLabel?: string;
 };
 
 export default function LedgerPage({
@@ -24,6 +25,7 @@ export default function LedgerPage({
   expenseLabel,
   categoryOptions,
   categoryLabel,
+  partyLabel,
 }: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
@@ -174,7 +176,7 @@ export default function LedgerPage({
         )}
         {showPartyFilter && (
           <>
-            <label className="label mb-0 ml-2">ผู้จ่าย</label>
+            <label className="label mb-0 ml-2">{partyLabel ?? "ผู้จ่าย"}</label>
             <select
               className="input max-w-xs"
               value={filterParty}
@@ -326,7 +328,7 @@ export default function LedgerPage({
               )}
               <div>
                 <label className="label">
-                  {mode === "INCOME" ? "ผู้จ่าย/ที่มา" : "ผู้รับเงิน/ที่จ่าย"}
+                  {partyLabel ?? (mode === "INCOME" ? "ผู้จ่าย/ที่มา" : "ผู้รับเงิน/ที่จ่าย")}
                 </label>
                 <input
                   className="input"

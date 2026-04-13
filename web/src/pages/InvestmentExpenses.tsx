@@ -9,6 +9,8 @@ export default function InvestmentExpenses() {
       expenseLabel="ยอดลงทุน"
       categoryOptions={["เงินสด", "โครงสร้าง"]}
       categoryLabel="ประเภท"
+      showPartyFilter
+      partyLabel="ผู้รับเงิน (ผู้รับเหมา)"
     />
   );
 }
