@@ -10,9 +10,17 @@ type Props = {
   title: string;
   ledgerType: string; // utilityType value used as discriminator
   showPartyFilter?: boolean;
+  hideIncome?: boolean;
+  expenseLabel?: string;
 };
 
-export default function LedgerPage({ title, ledgerType, showPartyFilter }: Props) {
+export default function LedgerPage({
+  title,
+  ledgerType,
+  showPartyFilter,
+  hideIncome,
+  expenseLabel,
+}: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
   const { data: ledger = [] } = useQuery({
@@ -103,17 +111,19 @@ export default function LedgerPage({ title, ledgerType, showPartyFilter }: Props
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold">{title}</h1>
         <div className="flex gap-2">
-          <button
-            className="btn-primary bg-emerald-600 hover:bg-emerald-700"
-            onClick={() => setMode("INCOME")}
-          >
-            + เพิ่มรายได้
-          </button>
+          {!hideIncome && (
+            <button
+              className="btn-primary bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => setMode("INCOME")}
+            >
+              + เพิ่มรายได้
+            </button>
+          )}
           <button
             className="btn-primary bg-rose-600 hover:bg-rose-700"
             onClick={() => setMode("EXPENSE")}
           >
-            + เพิ่มรายจ่าย
+            + {expenseLabel ?? "เพิ่มรายจ่าย"}
           </button>
         </div>
       </div>
@@ -245,7 +255,9 @@ export default function LedgerPage({ title, ledgerType, showPartyFilter }: Props
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">
-              {mode === "INCOME" ? `เพิ่มรายได้ ${title}` : `เพิ่มรายจ่าย ${title}`}
+              {mode === "INCOME"
+                ? `เพิ่มรายได้ ${title}`
+                : `${expenseLabel ?? "เพิ่มรายจ่าย"} ${title}`}
             </h2>
             <form
               className="space-y-3"
