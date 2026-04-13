@@ -139,10 +139,10 @@ export default function UtilityBills() {
 
   rows.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 
-  const allMonths = Array.from(new Set(rows.map((r) => r.period))).sort((a, b) =>
-    b.localeCompare(a)
-  );
-  const [filterMonth, setFilterMonth] = useState<string>("");
+  const allMonths = Array.from(
+    new Set([dayjs().format("YYYY-MM"), ...rows.map((r) => r.period)])
+  ).sort((a, b) => b.localeCompare(a));
+  const [filterMonth, setFilterMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const visibleRows = filterMonth
     ? rows.filter((r) => r.period === filterMonth)
     : rows;
