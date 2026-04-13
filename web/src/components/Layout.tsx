@@ -14,10 +14,10 @@ const nav = [
   { to: "/event-expenses", label: "ค่าจัดงานอีเวนต์", icon: PartyPopper },
   { to: "/income-expense", label: "รายรับรายจ่าย", icon: ArrowLeftRight },
   { to: "/utility-bills", label: "ค่าน้ำค่าไฟ", icon: Plug },
-  { to: "/assets", label: "ทรัพย์สิน", icon: Building2 },
   { to: "/reports/daily", label: "รายงานรายวัน", icon: BarChart3 },
   { to: "/reports/monthly", label: "รายงานรายเดือน", icon: BarChart3 },
   { to: "/reports/overdue", label: "ค้างชำระ", icon: AlertCircle },
+  { to: "/assets", label: "ทรัพย์สิน", icon: Building2 },
   { to: "/settings", label: "ตั้งค่า", icon: SettingsIcon },
 ];
 
