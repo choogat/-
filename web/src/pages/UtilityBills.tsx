@@ -138,8 +138,16 @@ export default function UtilityBills() {
 
   rows.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 
-  const totalIncome = rows.reduce((s, r) => s + r.income, 0);
-  const totalExpense = rows.reduce((s, r) => s + r.expense, 0);
+  const allMonths = Array.from(new Set(rows.map((r) => r.period))).sort((a, b) =>
+    b.localeCompare(a)
+  );
+  const [filterMonth, setFilterMonth] = useState<string>("");
+  const visibleRows = filterMonth
+    ? rows.filter((r) => r.period === filterMonth)
+    : rows;
+
+  const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
+  const totalExpense = visibleRows.reduce((s, r) => s + r.expense, 0);
   const net = totalIncome - totalExpense;
 
   return (
@@ -160,6 +168,25 @@ export default function UtilityBills() {
             + เพิ่มรายจ่าย
           </button>
         </div>
+      </div>
+
+      <div className="card flex items-center gap-3 flex-wrap">
+        <label className="label mb-0">ดูย้อนหลังรายเดือน</label>
+        <select
+          className="input max-w-xs"
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+        >
+          <option value="">ทั้งหมด</option>
+          {allMonths.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        {filterMonth && (
+          <button className="btn-secondary" onClick={() => setFilterMonth("")}>
+            ล้างตัวกรอง
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -196,10 +223,10 @@ export default function UtilityBills() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
+            {visibleRows.length === 0 && (
               <tr><td className="p-4 text-center text-slate-400" colSpan={6}>ไม่มีข้อมูล</td></tr>
             )}
-            {rows.map((r) => {
+            {visibleRows.map((r) => {
               const diff = r.income - r.expense;
               return (
                 <tr key={r.key} className="border-b align-top">
