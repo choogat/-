@@ -8,7 +8,6 @@ import { useAuth } from "../lib/auth";
 
 const nav = [
   { to: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
-  { to: "/contracts", label: "สัญญาเช่า", icon: FileText },
   { to: "/recurring-expenses", label: "ค่าใช้จ่ายประจำ", icon: Repeat },
   { to: "/event-expenses", label: "ค่าจัดงานอีเวนต์", icon: PartyPopper },
   { to: "/income-expense", label: "รายรับรายจ่าย", icon: ArrowLeftRight },
@@ -17,6 +16,7 @@ const nav = [
   { to: "/reports/monthly", label: "รายงานรายเดือน", icon: BarChart3 },
   { to: "/reports/overdue", label: "ค้างชำระ", icon: AlertCircle },
   { to: "/invoices", label: "ใบแจ้งหนี้", icon: Receipt },
+  { to: "/contracts", label: "สัญญาเช่า", icon: FileText },
   { to: "/assets", label: "ทรัพย์สิน", icon: Building2 },
   { to: "/settings", label: "ตั้งค่า", icon: SettingsIcon },
 ];
