@@ -23,6 +23,8 @@ type Props = {
     detail: string;
     income: number;
     expense: number;
+    party?: string;
+    category?: string;
     sortPriority?: number;
   }>;
 };
@@ -126,8 +128,8 @@ export default function LedgerPage({
     id: -1 - i,
     period: r.period,
     date: r.date,
-    party: "",
-    category: "",
+    party: r.party ?? "",
+    category: r.category ?? "",
     detail: r.detail,
     income: r.income,
     expense: r.expense,

@@ -24,9 +24,11 @@ export default function InvestmentExpenses() {
     return {
       period: d.format("YYYY-MM"),
       date: d.format("YYYY-MM-DD"),
+      party: i.contractor ?? "",
+      category: "ก่อสร้าง",
       detail: `[ก่อสร้าง] ${i.projectName} — ${i.description}${
-        i.contractor ? ` (${i.contractor})` : ""
-      }${i.receiptNo ? ` #${i.receiptNo}` : ""}`,
+        i.receiptNo ? ` #${i.receiptNo}` : ""
+      }`,
       income: 0,
       expense: i.amount,
     };
