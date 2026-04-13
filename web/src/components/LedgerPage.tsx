@@ -147,10 +147,10 @@ export default function LedgerPage({
         </div>
       </div>
 
-      <div className="card flex items-center gap-3 flex-wrap">
+      <div className="card flex items-center gap-2 flex-nowrap overflow-x-auto">
         <label className="label mb-0">ดูย้อนหลังรายเดือน</label>
         <select
-          className="input max-w-xs"
+          className="input w-40"
           value={filterMonth}
           onChange={(e) => setFilterMonth(e.target.value)}
         >
@@ -163,7 +163,7 @@ export default function LedgerPage({
           <>
             <label className="label mb-0 ml-2">{categoryLabel ?? "หมวด"}</label>
             <select
-              className="input max-w-xs"
+              className="input w-40"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
             >
@@ -178,7 +178,7 @@ export default function LedgerPage({
           <>
             <label className="label mb-0 ml-2">{partyLabel ?? "ผู้จ่าย"}</label>
             <select
-              className="input max-w-xs"
+              className="input w-40"
               value={filterParty}
               onChange={(e) => setFilterParty(e.target.value)}
             >
