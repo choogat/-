@@ -75,9 +75,26 @@ export default function UtilityBills() {
     expenseByPeriod.set(b.period, (b.electricAmount ?? 0) + (b.waterAmount ?? 0));
   }
 
+  const detailsByPeriod = new Map<string, string[]>();
   for (const l of ledger as any[]) {
     const m = l.kind === "INCOME" ? incomeByPeriod : expenseByPeriod;
     m.set(l.period, (m.get(l.period) ?? 0) + (l.amount ?? 0));
+    const utility = l.utilityType === "WATER" ? "ค่าน้ำ" : "ค่าไฟ";
+    const sign = l.kind === "INCOME" ? "+" : "-";
+    const desc = `${sign}${utility} ${l.party}${l.note ? ` (${l.note})` : ""}`;
+    const arr = detailsByPeriod.get(l.period) ?? [];
+    arr.push(desc);
+    detailsByPeriod.set(l.period, arr);
+  }
+  for (const b of bills as any[]) {
+    const parts: string[] = [];
+    if (b.electricAmount) parts.push(`ค่าไฟ ฿${b.electricAmount.toLocaleString()}`);
+    if (b.waterAmount) parts.push(`ค่าน้ำ ฿${b.waterAmount.toLocaleString()}`);
+    if (parts.length) {
+      const arr = detailsByPeriod.get(b.period) ?? [];
+      arr.push(parts.join(", "));
+      detailsByPeriod.set(b.period, arr);
+    }
   }
 
   const periods = Array.from(
@@ -133,7 +150,8 @@ export default function UtilityBills() {
         <table className="w-full text-sm">
           <thead className="text-left border-b">
             <tr>
-              <th className="p-2">งวด</th>
+              <th className="p-2">เดือน</th>
+              <th className="p-2">รายละเอียด</th>
               <th className="p-2 text-right">รายรับค่าน้ำค่าไฟ</th>
               <th className="p-2 text-right">รายจ่ายค่าน้ำค่าไฟ</th>
               <th className="p-2 text-right">คงเหลือ</th>
@@ -141,15 +159,18 @@ export default function UtilityBills() {
           </thead>
           <tbody>
             {periods.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={4}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={5}>ไม่มีข้อมูล</td></tr>
             )}
             {periods.map((p) => {
               const inc = incomeByPeriod.get(p) ?? 0;
               const exp = expenseByPeriod.get(p) ?? 0;
               const diff = inc - exp;
               return (
-                <tr key={p} className="border-b">
+                <tr key={p} className="border-b align-top">
                   <td className="p-2">{p}</td>
+                  <td className="p-2 text-slate-600 whitespace-pre-line">
+                    {(detailsByPeriod.get(p) ?? []).join("\n") || "-"}
+                  </td>
                   <td className="p-2 text-right text-emerald-600">฿{inc.toLocaleString()}</td>
                   <td className="p-2 text-right text-rose-600">฿{exp.toLocaleString()}</td>
                   <td className={`p-2 text-right font-semibold ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
@@ -161,7 +182,7 @@ export default function UtilityBills() {
           </tbody>
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
-              <td className="p-2">รวมทั้งหมด</td>
+              <td className="p-2" colSpan={2}>รวมทั้งหมด</td>
               <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
               <td className="p-2 text-right text-rose-600">฿{totalExpense.toLocaleString()}</td>
               <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
