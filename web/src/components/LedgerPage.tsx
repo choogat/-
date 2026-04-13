@@ -16,6 +16,7 @@ type Props = {
   categoryLabel?: string;
   partyLabel?: string;
   defaultAllMonths?: boolean;
+  showPartyColumn?: boolean;
 };
 
 export default function LedgerPage({
@@ -28,6 +29,7 @@ export default function LedgerPage({
   categoryLabel,
   partyLabel,
   defaultAllMonths,
+  showPartyColumn,
 }: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
@@ -102,7 +104,9 @@ export default function LedgerPage({
         date: dayjs(l.date).format("YYYY-MM-DD"),
         party: l.party as string,
         category,
-        detail: `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
+        detail: showPartyColumn
+          ? (l.note ?? "")
+          : `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
         income: l.kind === "INCOME" ? l.amount : 0,
         expense: l.kind === "EXPENSE" ? l.amount : 0,
       };
@@ -229,6 +233,7 @@ export default function LedgerPage({
           <thead className="text-left border-b">
             <tr>
               <th className="p-2">วันที่</th>
+              {showPartyColumn && <th className="p-2">{partyLabel ?? "ผู้รับเงิน"}</th>}
               <th className="p-2">รายละเอียด</th>
               <th className="p-2 text-right">รายรับ</th>
               <th className="p-2 text-right">รายจ่าย</th>
@@ -238,14 +243,15 @@ export default function LedgerPage({
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={6}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={showPartyColumn ? 7 : 6}>ไม่มีข้อมูล</td></tr>
             )}
             {visibleRows.map((r) => {
               const diff = r.income - r.expense;
               return (
                 <tr key={r.id} className="border-b align-top">
                   <td className="p-2">{r.date}</td>
-                  <td className="p-2 text-slate-600">{r.detail}</td>
+                  {showPartyColumn && <td className="p-2">{r.party}</td>}
+                  <td className="p-2 text-slate-600">{r.detail || "-"}</td>
                   <td className="p-2 text-right text-emerald-600">
                     {r.income ? `฿${r.income.toLocaleString()}` : "-"}
                   </td>
@@ -272,7 +278,7 @@ export default function LedgerPage({
           </tbody>
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
-              <td className="p-2" colSpan={2}>รวมทั้งหมด</td>
+              <td className="p-2" colSpan={showPartyColumn ? 3 : 2}>รวมทั้งหมด</td>
               <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
               <td className="p-2 text-right text-rose-600">฿{totalExpense.toLocaleString()}</td>
               <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
