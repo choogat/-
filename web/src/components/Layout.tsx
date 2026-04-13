@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Store, Users, FileText, Receipt,
-  Droplet, Zap, Wallet, Building2, BarChart3, AlertCircle,
+  Droplet, Zap, Wallet, Building2, BarChart3, AlertCircle, ArrowLeftRight,
   Settings as SettingsIcon, LogOut, Plug
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -11,6 +11,7 @@ const nav = [
   { to: "/contracts", label: "สัญญาเช่า", icon: FileText },
   { to: "/invoices", label: "ใบแจ้งหนี้", icon: Receipt },
   { to: "/expenses", label: "รายจ่าย", icon: Wallet },
+  { to: "/income-expense", label: "รายรับรายจ่าย", icon: ArrowLeftRight },
   { to: "/utility-bills", label: "สาธารณูปโภค", icon: Plug },
   { to: "/assets", label: "ทรัพย์สิน", icon: Building2 },
   { to: "/reports/daily", label: "รายงานรายวัน", icon: BarChart3 },

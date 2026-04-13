@@ -10,6 +10,7 @@ import Invoices from "./pages/Invoices";
 import WaterReadings from "./pages/WaterReadings";
 import ElectricReadings from "./pages/ElectricReadings";
 import Expenses from "./pages/Expenses";
+import IncomeExpense from "./pages/IncomeExpense";
 import UtilityBills from "./pages/UtilityBills";
 import Assets from "./pages/Assets";
 import ReportDaily from "./pages/ReportDaily";
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="water-readings" element={<WaterReadings />} />
           <Route path="electric-readings" element={<ElectricReadings />} />
           <Route path="expenses" element={<Expenses />} />
+          <Route path="income-expense" element={<IncomeExpense />} />
           <Route path="utility-bills" element={<UtilityBills />} />
           <Route path="assets" element={<Assets />} />
           <Route path="reports/daily" element={<ReportDaily />} />
