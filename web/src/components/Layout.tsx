@@ -8,12 +8,8 @@ import { useAuth } from "../lib/auth";
 
 const nav = [
   { to: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
-  { to: "/locks", label: "ล็อค", icon: Store },
-  { to: "/tenants", label: "ผู้เช่า", icon: Users },
   { to: "/contracts", label: "สัญญาเช่า", icon: FileText },
   { to: "/invoices", label: "ใบแจ้งหนี้", icon: Receipt },
-  { to: "/water-readings", label: "มิเตอร์น้ำ", icon: Droplet },
-  { to: "/electric-readings", label: "มิเตอร์ไฟ", icon: Zap },
   { to: "/expenses", label: "รายจ่าย", icon: Wallet },
   { to: "/utility-bills", label: "สาธารณูปโภค", icon: Plug },
   { to: "/assets", label: "ทรัพย์สิน", icon: Building2 },
