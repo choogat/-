@@ -89,15 +89,20 @@ export default function LedgerPage({
   });
 
   const rows = (ledger as any[])
-    .map((l) => ({
-      id: l.id,
-      period: l.period,
-      date: dayjs(l.date).format("YYYY-MM-DD"),
-      party: l.party as string,
-      detail: `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
-      income: l.kind === "INCOME" ? l.amount : 0,
-      expense: l.kind === "EXPENSE" ? l.amount : 0,
-    }))
+    .map((l) => {
+      const m = (l.note ?? "").match(/^\[([^\]]+)\]\s*(.*)$/);
+      const category = m ? m[1] : "";
+      return {
+        id: l.id,
+        period: l.period,
+        date: dayjs(l.date).format("YYYY-MM-DD"),
+        party: l.party as string,
+        category,
+        detail: `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
+        income: l.kind === "INCOME" ? l.amount : 0,
+        expense: l.kind === "EXPENSE" ? l.amount : 0,
+      };
+    })
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const allMonths = Array.from(
@@ -105,11 +110,13 @@ export default function LedgerPage({
   ).sort((a, b) => b.localeCompare(a));
   const [filterMonth, setFilterMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [filterParty, setFilterParty] = useState<string>("");
+  const [filterCategory, setFilterCategory] = useState<string>("");
   const allParties = Array.from(new Set(rows.map((r) => r.party).filter(Boolean))).sort();
   const visibleRows = rows.filter(
     (r) =>
       (!filterMonth || r.period === filterMonth) &&
-      (!filterParty || r.party === filterParty)
+      (!filterParty || r.party === filterParty) &&
+      (!filterCategory || r.category === filterCategory)
   );
 
   const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
@@ -150,6 +157,21 @@ export default function LedgerPage({
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
+        {categoryOptions && categoryOptions.length > 0 && (
+          <>
+            <label className="label mb-0 ml-2">{categoryLabel ?? "หมวด"}</label>
+            <select
+              className="input max-w-xs"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">ทั้งหมด</option>
+              {categoryOptions.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </>
+        )}
         {showPartyFilter && (
           <>
             <label className="label mb-0 ml-2">ผู้จ่าย</label>
@@ -165,12 +187,13 @@ export default function LedgerPage({
             </select>
           </>
         )}
-        {(filterMonth || filterParty) && (
+        {(filterMonth || filterParty || filterCategory) && (
           <button
             className="btn-secondary"
             onClick={() => {
               setFilterMonth("");
               setFilterParty("");
+              setFilterCategory("");
             }}
           >
             ล้างตัวกรอง
