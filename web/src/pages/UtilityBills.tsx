@@ -6,6 +6,16 @@ import { api } from "../lib/api";
 
 type Mode = "INCOME" | "EXPENSE";
 
+type Row = {
+  key: string;
+  period: string;
+  detail: string;
+  income: number;
+  expense: number;
+  ledgerId: number | null;
+  sortDate: string;
+};
+
 export default function UtilityBills() {
   const qc = useQueryClient();
   const { data: bills = [] } = useQuery({
@@ -61,50 +71,9 @@ export default function UtilityBills() {
       toast.error(e?.response?.data?.message ?? "บันทึกไม่สำเร็จ"),
   });
 
-  const incomeByPeriod = new Map<string, number>();
-  for (const inv of waterInvoices as any[]) {
-    if (inv.type !== "WATER" && inv.type !== "ELECTRIC") continue;
-    incomeByPeriod.set(
-      inv.period,
-      (incomeByPeriod.get(inv.period) ?? 0) + (inv.paidAmount ?? 0)
-    );
-  }
-
-  const expenseByPeriod = new Map<string, number>();
-  for (const b of bills as any[]) {
-    expenseByPeriod.set(b.period, (b.electricAmount ?? 0) + (b.waterAmount ?? 0));
-  }
-
-  type Detail = { id: number | null; text: string };
-  const detailsByPeriod = new Map<string, Detail[]>();
-  for (const l of ledger as any[]) {
-    const m = l.kind === "INCOME" ? incomeByPeriod : expenseByPeriod;
-    m.set(l.period, (m.get(l.period) ?? 0) + (l.amount ?? 0));
-    const utility = l.utilityType === "WATER" ? "ค่าน้ำ" : "ค่าไฟ";
-    const sign = l.kind === "INCOME" ? "+" : "-";
-    const text = `${sign}${utility} ${l.party} ฿${(l.amount ?? 0).toLocaleString()}${l.note ? ` (${l.note})` : ""}`;
-    const arr = detailsByPeriod.get(l.period) ?? [];
-    arr.push({ id: l.id, text });
-    detailsByPeriod.set(l.period, arr);
-  }
-  for (const b of bills as any[]) {
-    const parts: string[] = [];
-    if (b.electricAmount) parts.push(`ค่าไฟ ฿${b.electricAmount.toLocaleString()}`);
-    if (b.waterAmount) parts.push(`ค่าน้ำ ฿${b.waterAmount.toLocaleString()}`);
-    if (parts.length) {
-      const arr = detailsByPeriod.get(b.period) ?? [];
-      arr.push({ id: null, text: parts.join(", ") });
-      detailsByPeriod.set(b.period, arr);
-    }
-  }
-
-  const delPeriod = useMutation({
-    mutationFn: async (period: string) => {
-      const ids = (ledger as any[])
-        .filter((l) => l.period === period)
-        .map((l) => l.id);
-      await Promise.all(ids.map((id) => api.delete(`/utility-ledger/${id}`)));
-    },
+  const del = useMutation({
+    mutationFn: async (id: number) =>
+      (await api.delete(`/utility-ledger/${id}`)).data,
     onSuccess: () => {
       toast.success("ลบแล้ว");
       qc.invalidateQueries({ queryKey: ["utility-ledger"] });
@@ -113,12 +82,64 @@ export default function UtilityBills() {
       toast.error(e?.response?.data?.message ?? "ลบไม่สำเร็จ"),
   });
 
-  const periods = Array.from(
-    new Set([...incomeByPeriod.keys(), ...expenseByPeriod.keys()])
-  ).sort((a, b) => b.localeCompare(a));
+  const rows: Row[] = [];
 
-  const totalIncome = [...incomeByPeriod.values()].reduce((s, v) => s + v, 0);
-  const totalExpense = [...expenseByPeriod.values()].reduce((s, v) => s + v, 0);
+  const invoiceIncomeByPeriod = new Map<string, number>();
+  for (const inv of waterInvoices as any[]) {
+    if (inv.type !== "WATER" && inv.type !== "ELECTRIC") continue;
+    invoiceIncomeByPeriod.set(
+      inv.period,
+      (invoiceIncomeByPeriod.get(inv.period) ?? 0) + (inv.paidAmount ?? 0)
+    );
+  }
+  for (const [period, amount] of invoiceIncomeByPeriod) {
+    if (!amount) continue;
+    rows.push({
+      key: `inv-${period}`,
+      period,
+      detail: "รายรับจากใบแจ้งหนี้ค่าน้ำ/ค่าไฟ",
+      income: amount,
+      expense: 0,
+      ledgerId: null,
+      sortDate: `${period}-01`,
+    });
+  }
+
+  for (const b of bills as any[]) {
+    const parts: string[] = [];
+    if (b.electricAmount) parts.push(`ค่าไฟ ฿${b.electricAmount.toLocaleString()}`);
+    if (b.waterAmount) parts.push(`ค่าน้ำ ฿${b.waterAmount.toLocaleString()}`);
+    if (!parts.length) continue;
+    rows.push({
+      key: `bill-${b.id}`,
+      period: b.period,
+      detail: parts.join(", "),
+      income: 0,
+      expense: (b.electricAmount ?? 0) + (b.waterAmount ?? 0),
+      ledgerId: null,
+      sortDate: `${b.period}-01`,
+    });
+  }
+
+  for (const l of ledger as any[]) {
+    const utility = l.utilityType === "WATER" ? "ค่าน้ำ" : "ค่าไฟ";
+    const partyLabel = l.kind === "INCOME" ? "จาก" : "ให้";
+    const detail = `${utility} ${partyLabel} ${l.party}${l.note ? ` (${l.note})` : ""}`;
+    rows.push({
+      key: `led-${l.id}`,
+      period: l.period,
+      detail,
+      income: l.kind === "INCOME" ? l.amount : 0,
+      expense: l.kind === "EXPENSE" ? l.amount : 0,
+      ledgerId: l.id,
+      sortDate: dayjs(l.date).format("YYYY-MM-DD"),
+    });
+  }
+
+  rows.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+
+  const totalIncome = rows.reduce((s, r) => s + r.income, 0);
+  const totalExpense = rows.reduce((s, r) => s + r.expense, 0);
   const net = totalIncome - totalExpense;
 
   return (
@@ -175,32 +196,31 @@ export default function UtilityBills() {
             </tr>
           </thead>
           <tbody>
-            {periods.length === 0 && (
+            {rows.length === 0 && (
               <tr><td className="p-4 text-center text-slate-400" colSpan={6}>ไม่มีข้อมูล</td></tr>
             )}
-            {periods.map((p) => {
-              const inc = incomeByPeriod.get(p) ?? 0;
-              const exp = expenseByPeriod.get(p) ?? 0;
-              const diff = inc - exp;
+            {rows.map((r) => {
+              const diff = r.income - r.expense;
               return (
-                <tr key={p} className="border-b align-top">
-                  <td className="p-2">{p}</td>
-                  <td className="p-2 text-slate-600 whitespace-pre-line">
-                    {(detailsByPeriod.get(p) ?? []).map((d) => d.text).join("\n") || "-"}
+                <tr key={r.key} className="border-b align-top">
+                  <td className="p-2">{r.period}</td>
+                  <td className="p-2 text-slate-600">{r.detail}</td>
+                  <td className="p-2 text-right text-emerald-600">
+                    {r.income ? `฿${r.income.toLocaleString()}` : "-"}
                   </td>
-                  <td className="p-2 text-right text-emerald-600">฿{inc.toLocaleString()}</td>
-                  <td className="p-2 text-right text-rose-600">฿{exp.toLocaleString()}</td>
+                  <td className="p-2 text-right text-rose-600">
+                    {r.expense ? `฿${r.expense.toLocaleString()}` : "-"}
+                  </td>
                   <td className={`p-2 text-right font-semibold ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     ฿{diff.toLocaleString()}
                   </td>
                   <td className="p-2 text-right">
-                    {(ledger as any[]).some((l) => l.period === p) && (
+                    {r.ledgerId !== null && (
                       <button
                         type="button"
                         className="text-rose-600 hover:text-rose-800 text-xs"
                         onClick={() => {
-                          if (confirm(`ลบข้อมูลทั้งหมดของเดือน ${p}?`))
-                            delPeriod.mutate(p);
+                          if (confirm("ลบรายการนี้?")) del.mutate(r.ledgerId!);
                         }}
                       >
                         ลบ
