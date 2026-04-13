@@ -11,6 +11,7 @@ export default function InvestmentExpenses() {
       categoryLabel="ประเภท"
       showPartyFilter
       partyLabel="ผู้รับเงิน (ผู้รับเหมา)"
+      defaultAllMonths
     />
   );
 }

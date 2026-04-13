@@ -15,6 +15,7 @@ type Props = {
   categoryOptions?: string[];
   categoryLabel?: string;
   partyLabel?: string;
+  defaultAllMonths?: boolean;
 };
 
 export default function LedgerPage({
@@ -26,6 +27,7 @@ export default function LedgerPage({
   categoryOptions,
   categoryLabel,
   partyLabel,
+  defaultAllMonths,
 }: Props) {
   const qc = useQueryClient();
   const queryKey = ["utility-ledger", ledgerType];
@@ -110,7 +112,9 @@ export default function LedgerPage({
   const allMonths = Array.from(
     new Set([dayjs().format("YYYY-MM"), ...rows.map((r) => r.period)])
   ).sort((a, b) => b.localeCompare(a));
-  const [filterMonth, setFilterMonth] = useState<string>(dayjs().format("YYYY-MM"));
+  const [filterMonth, setFilterMonth] = useState<string>(
+    defaultAllMonths ? "" : dayjs().format("YYYY-MM")
+  );
   const [filterParty, setFilterParty] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<string>("");
   const allParties = Array.from(new Set(rows.map((r) => r.party).filter(Boolean))).sort();
