@@ -46,7 +46,7 @@ export default function ConstructionExpenses() {
 
   const totalBudget = projectsQ.data?.reduce((s, p) => s + p.budget, 0) ?? 0;
   const totalPaid = projectsQ.data?.reduce((s, p) => s + p.paid, 0) ?? 0;
-  const totalWht = totalPaid * 0.03;
+  const totalWht = (totalPaid / 0.99) * 0.03;
   const totalRemain = totalBudget - totalPaid;
 
   return (
@@ -94,7 +94,7 @@ export default function ConstructionExpenses() {
                   <td className="p-3">{p.contractor ?? "-"}</td>
                   <td className="p-3 text-right">{fmt(p.budget)}</td>
                   <td className="p-3 text-right text-green-700">{fmt(p.paid)}</td>
-                  <td className="p-3 text-right text-purple-700">{fmt(p.paid * 0.03)}</td>
+                  <td className="p-3 text-right text-purple-700">{fmt((p.paid / 0.99) * 0.03)}</td>
                   <td className="p-3 text-right font-semibold text-amber-700">
                     {fmt(p.remaining)}
                   </td>
@@ -352,7 +352,7 @@ function InstallmentModal({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
         <SummaryCard label="ยอดรวม" value={fmt(project.budget)} color="bg-slate-100" />
         <SummaryCard label="จ่ายแล้ว" value={fmt(paid)} color="bg-green-100" />
-        <SummaryCard label="หักภาษี ณ ที่จ่าย 3%" value={fmt(paid * 0.03)} color="bg-purple-100" />
+        <SummaryCard label="หักภาษี ณ ที่จ่าย 3%" value={fmt((paid / 0.99) * 0.03)} color="bg-purple-100" />
         <SummaryCard label="คงเหลือ" value={fmt(remaining)} color="bg-amber-100" />
       </div>
 
