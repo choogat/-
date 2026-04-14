@@ -278,7 +278,7 @@ export default function LedgerPage({
               const diff = r.income - r.expense;
               return (
                 <tr key={r.id} className="border-b align-top">
-                  <td className="p-2">{r.date}</td>
+                  <td className="p-2">{dayjs(r.date).format("DD/MM/YYYY")}</td>
                   {showPartyColumn && <td className="p-2">{r.party}</td>}
                   <td className="p-2 text-slate-600">{r.detail || "-"}</td>
                   <td className="p-2 text-right text-emerald-600">
