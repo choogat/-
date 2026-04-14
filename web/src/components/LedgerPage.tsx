@@ -255,10 +255,12 @@ export default function LedgerPage({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="card">
-          <div className="text-sm text-slate-500">รายรับรวม</div>
-          <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
-        </div>
+        {!hideIncome && (
+          <div className="card">
+            <div className="text-sm text-slate-500">รายรับรวม</div>
+            <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
+          </div>
+        )}
         <div className="card">
           <div className="text-sm text-slate-500">รายจ่ายรวม</div>
           <div className="text-2xl font-bold text-rose-600">฿{totalExpense.toLocaleString()}</div>
@@ -279,15 +281,15 @@ export default function LedgerPage({
               {showPartyColumn && <th className="p-2">{partyLabel ?? "ผู้รับเงิน"}</th>}
               <th className="p-2">{categoryLabel ?? "ประเภท"}</th>
               <th className="p-2">รายละเอียด</th>
-              <th className="p-2 text-right">รายรับ</th>
+              {!hideIncome && <th className="p-2 text-right">รายรับ</th>}
               <th className="p-2 text-right">รายจ่าย</th>
-              <th className="p-2 text-right">คงเหลือ</th>
+              {!hideIncome && <th className="p-2 text-right">คงเหลือ</th>}
               <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={showPartyColumn ? 8 : 7}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={(showPartyColumn ? 5 : 4) + (hideIncome ? 1 : 3)}>ไม่มีข้อมูล</td></tr>
             )}
             {visibleRows.map((r) => {
               const diff = r.income - r.expense;
@@ -297,15 +299,19 @@ export default function LedgerPage({
                   {showPartyColumn && <td className="p-2">{r.party}</td>}
                   <td className="p-2">{r.category || "-"}</td>
                   <td className="p-2 text-slate-600">{r.detail || "-"}</td>
-                  <td className="p-2 text-right text-emerald-600">
-                    {r.income ? `฿${r.income.toLocaleString()}` : "-"}
-                  </td>
+                  {!hideIncome && (
+                    <td className="p-2 text-right text-emerald-600">
+                      {r.income ? `฿${r.income.toLocaleString()}` : "-"}
+                    </td>
+                  )}
                   <td className="p-2 text-right text-rose-600">
                     {r.expense ? `฿${r.expense.toLocaleString()}` : "-"}
                   </td>
-                  <td className={`p-2 text-right font-semibold ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                    ฿{diff.toLocaleString()}
-                  </td>
+                  {!hideIncome && (
+                    <td className={`p-2 text-right font-semibold ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                      ฿{diff.toLocaleString()}
+                    </td>
+                  )}
                   <td className="p-2 text-right space-x-2">
                     {!r.readonly && (
                       <>
@@ -345,11 +351,15 @@ export default function LedgerPage({
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
               <td className="p-2" colSpan={showPartyColumn ? 4 : 3}>รวมทั้งหมด</td>
-              <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
+              {!hideIncome && (
+                <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
+              )}
               <td className="p-2 text-right text-rose-600">฿{totalExpense.toLocaleString()}</td>
-              <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                ฿{net.toLocaleString()}
-              </td>
+              {!hideIncome && (
+                <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                  ฿{net.toLocaleString()}
+                </td>
+              )}
               <td className="p-2"></td>
             </tr>
           </tfoot>
