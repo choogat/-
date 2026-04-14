@@ -70,7 +70,7 @@ export default function ConstructionExpenses() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <SummaryCard label="ยอดรวมทุกโครงการ" value={fmt(totalBudget)} color="bg-slate-100" />
         <SummaryCard label="จ่ายแล้ว" value={fmt(totalPaid)} color="bg-green-100" />
-        <SummaryCard label="หักภาษี ณ ที่จ่าย 3%" value={fmt(totalWht)} color="bg-purple-100" />
+        <SummaryCard label="ภาษี ณ ที่จ่าย" value={fmt(totalWht)} color="bg-purple-100" />
         <SummaryCard label="คงเหลือต้องจ่าย" value={fmt(totalRemain)} color="bg-amber-100" />
       </div>
 
@@ -83,7 +83,7 @@ export default function ConstructionExpenses() {
               <th className="p-3">ผู้รับเหมา</th>
               <th className="p-3 text-right">ยอดรวม</th>
               <th className="p-3 text-right">จ่ายแล้ว</th>
-              <th className="p-3 text-right">หักภาษี ณ ที่จ่าย 3%</th>
+              <th className="p-3 text-right">ภาษี ณ ที่จ่าย</th>
               <th className="p-3 text-right">คงเหลือ</th>
               <th className="p-3 text-right">%คงเหลือ</th>
               <th className="p-3 text-center">งวด</th>
@@ -467,7 +467,7 @@ function InstallmentModal({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
         <SummaryCard label="ยอดรวม" value={fmt(project.budget)} color="bg-slate-100" />
         <SummaryCard label="จ่ายแล้ว" value={fmt(paid)} color="bg-green-100" />
-        <SummaryCard label="หักภาษี ณ ที่จ่าย 3%" value={fmt(wht)} color="bg-purple-100" />
+        <SummaryCard label="ภาษี ณ ที่จ่าย" value={fmt(wht)} color="bg-purple-100" />
         <SummaryCard label="คงเหลือ" value={fmt(remaining)} color="bg-amber-100" />
       </div>
 
