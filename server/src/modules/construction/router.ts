@@ -156,6 +156,22 @@ constructionRouter.post(
   })
 );
 
+constructionRouter.patch(
+  "/installments/:id",
+  requireRole(Role.ADMIN, Role.MANAGER, Role.STAFF),
+  ah(async (req, res) => {
+    const id = Number(req.params.id);
+    const b = req.body as any;
+    const data: any = {};
+    if (b.date !== undefined) data.date = new Date(b.date);
+    if (b.description !== undefined) data.description = b.description;
+    if (b.amount !== undefined) data.amount = Number(b.amount);
+    if (b.receiptNo !== undefined) data.receiptNo = b.receiptNo || null;
+    const item = await prisma.constructionExpense.update({ where: { id }, data });
+    res.json(item);
+  })
+);
+
 constructionRouter.delete(
   "/installments/:id",
   requireRole(Role.ADMIN, Role.MANAGER),

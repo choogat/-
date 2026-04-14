@@ -409,6 +409,7 @@ function InstallmentModal({
   const [amount, setAmount] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
   const [deleteInst, setDeleteInst] = useState<Installment | null>(null);
+  const [editInst, setEditInst] = useState<Installment | null>(null);
 
   const listQ = useQuery<Installment[]>({
     queryKey: ["construction-installments", project.id],
@@ -524,6 +525,12 @@ function InstallmentModal({
                 <td className="p-2">{i.receiptNo ?? "-"}</td>
                 <td className="p-2 text-right">
                   <button
+                    onClick={() => setEditInst(i)}
+                    className="text-amber-600 hover:underline mr-2"
+                  >
+                    แก้ไข
+                  </button>
+                  <button
                     onClick={() => setDeleteInst(i)}
                     className="text-red-600 hover:underline"
                   >
@@ -542,6 +549,18 @@ function InstallmentModal({
           </tbody>
         </table>
       </div>
+
+      {editInst && (
+        <EditInstallmentModal
+          installment={editInst}
+          onClose={() => setEditInst(null)}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["construction-installments", project.id] });
+            onChanged();
+            setEditInst(null);
+          }}
+        />
+      )}
 
       {deleteInst && (
         <ConfirmDeleteModal
@@ -569,6 +588,69 @@ function InstallmentModal({
           }}
         />
       )}
+    </Modal>
+  );
+}
+
+function EditInstallmentModal({
+  installment,
+  onClose,
+  onSaved,
+}: {
+  installment: Installment;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [date, setDate] = useState(installment.date.slice(0, 10));
+  const [description, setDescription] = useState(installment.description);
+  const [amount, setAmount] = useState(String(installment.amount));
+  const [receiptNo, setReceiptNo] = useState(installment.receiptNo ?? "");
+
+  const save = useMutation({
+    mutationFn: async () => {
+      await api.patch(`/construction/installments/${installment.id}`, {
+        date,
+        description,
+        amount: Number(amount),
+        receiptNo: receiptNo || null,
+      });
+    },
+    onSuccess: () => {
+      toast.success("บันทึกแล้ว");
+      onSaved();
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? "ผิดพลาด"),
+  });
+
+  return (
+    <Modal title="แก้ไขงวดการจ่าย" onClose={onClose}>
+      <div className="space-y-3">
+        <Field label="วันที่ *">
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="input" />
+        </Field>
+        <Field label="รายละเอียด *">
+          <input value={description} onChange={(e) => setDescription(e.target.value)} className="input" />
+        </Field>
+        <Field label="จำนวนเงิน *">
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" />
+        </Field>
+        <Field label="เลขใบเสร็จ">
+          <input value={receiptNo} onChange={(e) => setReceiptNo(e.target.value)} className="input" />
+        </Field>
+      </div>
+      <div className="flex justify-end gap-2 mt-4">
+        <button onClick={onClose} className="px-4 py-2 rounded border">ยกเลิก</button>
+        <button
+          onClick={() => {
+            if (!description || !amount) return toast.error("กรอกรายละเอียดและจำนวน");
+            save.mutate();
+          }}
+          disabled={save.isPending}
+          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+        >
+          บันทึก
+        </button>
+      </div>
     </Modal>
   );
 }
