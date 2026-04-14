@@ -18,6 +18,7 @@ constructionRouter.get(
     });
     const result = projects.map((p) => {
       const paid = p.expenses.reduce((s, e) => s + e.amount, 0);
+      const wht = p.expenses.reduce((s, e) => s + (e.withholdingTax || 0), 0);
       return {
         id: p.id,
         name: p.name,
@@ -28,7 +29,8 @@ constructionRouter.get(
         progressPct: p.progressPct,
         status: p.status,
         paid,
-        remaining: p.budget - paid,
+        wht,
+        remaining: p.budget - paid - wht,
         installmentCount: p.expenses.length,
       };
     });
@@ -141,14 +143,17 @@ constructionRouter.post(
         description: z.string().min(1),
         amount: z.number().positive(),
         receiptNo: z.string().optional().nullable(),
+        hasWht: z.boolean().optional(),
       })
       .parse(req.body);
+    const withholdingTax = body.hasWht ? (body.amount / 0.99) * 0.03 : 0;
     const item = await prisma.constructionExpense.create({
       data: {
         projectId,
         date: new Date(body.date),
         description: body.description,
         amount: body.amount,
+        withholdingTax,
         receiptNo: body.receiptNo || null,
       },
     });
@@ -167,6 +172,12 @@ constructionRouter.patch(
     if (b.description !== undefined) data.description = b.description;
     if (b.amount !== undefined) data.amount = Number(b.amount);
     if (b.receiptNo !== undefined) data.receiptNo = b.receiptNo || null;
+    if (b.hasWht !== undefined) {
+      const amt = b.amount !== undefined
+        ? Number(b.amount)
+        : (await prisma.constructionExpense.findUnique({ where: { id } }))?.amount ?? 0;
+      data.withholdingTax = b.hasWht ? (amt / 0.99) * 0.03 : 0;
+    }
     const item = await prisma.constructionExpense.update({ where: { id }, data });
     res.json(item);
   })

@@ -13,6 +13,7 @@ type Project = {
   status: string;
   progressPct: number;
   paid: number;
+  wht: number;
   remaining: number;
   installmentCount: number;
 };
@@ -22,6 +23,7 @@ type Installment = {
   date: string;
   description: string;
   amount: number;
+  withholdingTax: number;
   receiptNo: string | null;
 };
 
@@ -47,7 +49,7 @@ export default function ConstructionExpenses() {
 
   const totalBudget = projectsQ.data?.reduce((s, p) => s + p.budget, 0) ?? 0;
   const totalPaid = projectsQ.data?.reduce((s, p) => s + p.paid, 0) ?? 0;
-  const totalWht = (totalPaid / 0.99) * 0.03;
+  const totalWht = projectsQ.data?.reduce((s, p) => s + (p.wht ?? 0), 0) ?? 0;
   const totalRemain = totalBudget - totalPaid - totalWht;
 
   return (
@@ -96,14 +98,12 @@ export default function ConstructionExpenses() {
                   <td className="p-3">{p.contractor ?? "-"}</td>
                   <td className="p-3 text-right">{fmt(p.budget)}</td>
                   <td className="p-3 text-right text-green-700">{fmt(p.paid)}</td>
-                  <td className="p-3 text-right text-purple-700">{fmt((p.paid / 0.99) * 0.03)}</td>
+                  <td className="p-3 text-right text-purple-700">{fmt(p.wht ?? 0)}</td>
                   <td className="p-3 text-right font-semibold text-amber-700">
-                    {fmt(p.budget - p.paid - (p.paid / 0.99) * 0.03)}
+                    {fmt(p.remaining)}
                   </td>
                   <td className="p-3 text-right text-amber-700">
-                    {p.budget > 0
-                      ? ((p.budget - p.paid - (p.paid / 0.99) * 0.03) / p.budget * 100).toFixed(2)
-                      : "0.00"}%
+                    {p.budget > 0 ? ((p.remaining / p.budget) * 100).toFixed(2) : "0.00"}%
                   </td>
                   <td className="p-3 text-center">
                     <div className="text-xs text-slate-500">{p.installmentCount} งวด</div>
@@ -408,6 +408,7 @@ function InstallmentModal({
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
+  const [hasWht, setHasWht] = useState(false);
   const [deleteInst, setDeleteInst] = useState<Installment | null>(null);
   const [editInst, setEditInst] = useState<Installment | null>(null);
 
@@ -418,7 +419,8 @@ function InstallmentModal({
   });
 
   const paid = listQ.data?.reduce((s, i) => s + i.amount, 0) ?? project.paid;
-  const remaining = project.budget - paid - (paid / 0.99) * 0.03;
+  const wht = listQ.data?.reduce((s, i) => s + (i.withholdingTax || 0), 0) ?? project.wht ?? 0;
+  const remaining = project.budget - paid - wht;
 
   const add = useMutation({
     mutationFn: async () => {
@@ -427,6 +429,7 @@ function InstallmentModal({
         description,
         amount: Number(amount),
         receiptNo: receiptNo || null,
+        hasWht,
       });
     },
     onSuccess: () => {
@@ -434,6 +437,7 @@ function InstallmentModal({
       setDescription("");
       setAmount("");
       setReceiptNo("");
+      setHasWht(false);
       qc.invalidateQueries({ queryKey: ["construction-installments", project.id] });
       onChanged();
     },
@@ -456,7 +460,7 @@ function InstallmentModal({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
         <SummaryCard label="ยอดรวม" value={fmt(project.budget)} color="bg-slate-100" />
         <SummaryCard label="จ่ายแล้ว" value={fmt(paid)} color="bg-green-100" />
-        <SummaryCard label="หักภาษี ณ ที่จ่าย 3%" value={fmt((paid / 0.99) * 0.03)} color="bg-purple-100" />
+        <SummaryCard label="หักภาษี ณ ที่จ่าย 3%" value={fmt(wht)} color="bg-purple-100" />
         <SummaryCard label="คงเหลือ" value={fmt(remaining)} color="bg-amber-100" />
       </div>
 
@@ -485,6 +489,21 @@ function InstallmentModal({
             className="input"
           />
         </div>
+        <div className="flex items-center justify-between mt-2">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={hasWht}
+              onChange={(e) => setHasWht(e.target.checked)}
+            />
+            <span>มีหักภาษี ณ ที่จ่าย 3%</span>
+            {hasWht && amount && (
+              <span className="text-purple-700">
+                (= {fmt((Number(amount) / 0.99) * 0.03)} บาท)
+              </span>
+            )}
+          </label>
+        </div>
         <div className="flex justify-end mt-2">
           <button
             onClick={() => {
@@ -511,6 +530,7 @@ function InstallmentModal({
               <th className="p-2">วันที่</th>
               <th className="p-2">รายละเอียด</th>
               <th className="p-2 text-right">จำนวน</th>
+              <th className="p-2 text-right">หักภาษี 3%</th>
               <th className="p-2">ใบเสร็จ</th>
               <th className="p-2"></th>
             </tr>
@@ -522,6 +542,9 @@ function InstallmentModal({
                 <td className="p-2">{fmtDate(i.date)}</td>
                 <td className="p-2">{i.description}</td>
                 <td className="p-2 text-right">{fmt(i.amount)}</td>
+                <td className="p-2 text-right text-purple-700">
+                  {i.withholdingTax > 0 ? fmt(i.withholdingTax) : "-"}
+                </td>
                 <td className="p-2">{i.receiptNo ?? "-"}</td>
                 <td className="p-2 text-right">
                   <button
@@ -541,7 +564,7 @@ function InstallmentModal({
             ))}
             {listQ.data?.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-4 text-center text-slate-500">
+                <td colSpan={7} className="p-4 text-center text-slate-500">
                   ยังไม่มีการจ่ายงวด
                 </td>
               </tr>
@@ -605,6 +628,7 @@ function EditInstallmentModal({
   const [description, setDescription] = useState(installment.description);
   const [amount, setAmount] = useState(String(installment.amount));
   const [receiptNo, setReceiptNo] = useState(installment.receiptNo ?? "");
+  const [hasWht, setHasWht] = useState((installment.withholdingTax || 0) > 0);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -613,6 +637,7 @@ function EditInstallmentModal({
         description,
         amount: Number(amount),
         receiptNo: receiptNo || null,
+        hasWht,
       });
     },
     onSuccess: () => {
@@ -637,6 +662,15 @@ function EditInstallmentModal({
         <Field label="เลขใบเสร็จ">
           <input value={receiptNo} onChange={(e) => setReceiptNo(e.target.value)} className="input" />
         </Field>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={hasWht} onChange={(e) => setHasWht(e.target.checked)} />
+          <span>มีหักภาษี ณ ที่จ่าย 3%</span>
+          {hasWht && amount && (
+            <span className="text-purple-700">
+              (= {fmt((Number(amount) / 0.99) * 0.03)} บาท)
+            </span>
+          )}
+        </label>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={onClose} className="px-4 py-2 rounded border">ยกเลิก</button>
