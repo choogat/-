@@ -289,8 +289,8 @@ export default function LedgerPage({
           })()}
         </div>
         <div className="card bg-rose-50 border-rose-200 flex flex-col justify-center items-center text-center">
-          <div className="text-base text-slate-600">รายจ่ายรวม</div>
-          <div className="text-4xl font-extrabold text-rose-600 mt-2">฿{totalExpense.toLocaleString()}</div>
+          <div className="text-2xl font-semibold text-slate-700">รายจ่ายรวม</div>
+          <div className="text-2xl font-bold text-rose-600 mt-3">฿{totalExpense.toLocaleString()}</div>
         </div>
       </div>
 
