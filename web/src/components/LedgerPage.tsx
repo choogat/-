@@ -123,6 +123,7 @@ export default function LedgerPage({
   const ledgerRows = (ledger as any[]).map((l) => {
     const m = (l.note ?? "").match(/^\[([^\]]+)\]\s*(.*)$/);
     const category = m ? m[1] : "";
+    const noteWithoutCat = m ? m[2] : (l.note ?? "");
     return {
       id: l.id as number,
       period: l.period as string,
@@ -130,8 +131,8 @@ export default function LedgerPage({
       party: l.party as string,
       category,
       detail: showPartyColumn
-        ? (l.note ?? "")
-        : `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${l.note ? ` (${l.note})` : ""}`,
+        ? noteWithoutCat
+        : `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${noteWithoutCat ? ` (${noteWithoutCat})` : ""}`,
       income: l.kind === "INCOME" ? l.amount : 0,
       expense: l.kind === "EXPENSE" ? l.amount : 0,
       readonly: false as boolean,
