@@ -48,6 +48,34 @@ utilityLedgerRouter.post(
   })
 );
 
+utilityLedgerRouter.patch(
+  "/:id",
+  requireRole(Role.ADMIN, Role.MANAGER, Role.STAFF),
+  ah(async (req, res) => {
+    const body = z
+      .object({
+        date: z.string().optional(),
+        party: z.string().optional(),
+        amount: z.number().positive().optional(),
+        note: z.string().optional().nullable(),
+      })
+      .parse(req.body);
+    const data: any = {};
+    if (body.date !== undefined) {
+      data.date = new Date(body.date);
+      data.period = dayjs(body.date).format("YYYY-MM");
+    }
+    if (body.party !== undefined) data.party = body.party;
+    if (body.amount !== undefined) data.amount = body.amount;
+    if (body.note !== undefined) data.note = body.note ?? null;
+    const item = await (prisma as any).utilityLedger.update({
+      where: { id: Number(req.params.id) },
+      data,
+    });
+    res.json(item);
+  })
+);
+
 utilityLedgerRouter.delete(
   "/:id",
   requireRole(Role.ADMIN, Role.MANAGER),

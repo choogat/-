@@ -51,6 +51,7 @@ export default function LedgerPage({
   });
 
   const [mode, setMode] = useState<Mode | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [confirmDelId, setConfirmDelId] = useState<number | null>(null);
   const [form, setForm] = useState({
     date: dayjs().format("YYYY-MM-DD"),
@@ -70,25 +71,38 @@ export default function LedgerPage({
     });
 
   const save = useMutation({
-    mutationFn: async () =>
-      (
+    mutationFn: async () => {
+      const note =
+        [form.category ? `[${form.category}]` : "", form.note]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || undefined;
+      if (editId !== null) {
+        return (
+          await api.patch(`/utility-ledger/${editId}`, {
+            date: form.date,
+            party: form.party,
+            amount: Number(form.amount),
+            note,
+          })
+        ).data;
+      }
+      return (
         await api.post("/utility-ledger", {
           date: form.date,
           kind: mode,
           utilityType: ledgerType,
           party: form.party,
           amount: Number(form.amount),
-          note:
-            [form.category ? `[${form.category}]` : "", form.note]
-              .filter(Boolean)
-              .join(" ")
-              .trim() || undefined,
+          note,
         })
-      ).data,
+      ).data;
+    },
     onSuccess: () => {
       toast.success("บันทึกแล้ว");
       qc.invalidateQueries({ queryKey });
       setMode(null);
+      setEditId(null);
       resetForm();
     },
     onError: (e: any) =>
@@ -292,15 +306,36 @@ export default function LedgerPage({
                   <td className={`p-2 text-right font-semibold ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     ฿{diff.toLocaleString()}
                   </td>
-                  <td className="p-2 text-right">
+                  <td className="p-2 text-right space-x-2">
                     {!r.readonly && (
-                      <button
-                        type="button"
-                        className="text-rose-600 hover:text-rose-800 text-xs"
-                        onClick={() => setConfirmDelId(r.id)}
-                      >
-                        ลบ
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                          onClick={() => {
+                            const ledgerItem = (ledger as any[]).find((l) => l.id === r.id);
+                            if (!ledgerItem) return;
+                            setEditId(r.id);
+                            setMode(ledgerItem.kind as Mode);
+                            setForm({
+                              date: dayjs(ledgerItem.date).format("YYYY-MM-DD"),
+                              party: ledgerItem.party ?? "",
+                              amount: ledgerItem.amount ?? 0,
+                              note: r.detail.replace(/^\[[^\]]+\]\s*/, ""),
+                              category: r.category ?? categoryOptions?.[0] ?? "",
+                            });
+                          }}
+                        >
+                          แก้ไข
+                        </button>
+                        <button
+                          type="button"
+                          className="text-rose-600 hover:text-rose-800 text-xs"
+                          onClick={() => setConfirmDelId(r.id)}
+                        >
+                          ลบ
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -309,7 +344,7 @@ export default function LedgerPage({
           </tbody>
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
-              <td className="p-2" colSpan={showPartyColumn ? 3 : 2}>รวมทั้งหมด</td>
+              <td className="p-2" colSpan={showPartyColumn ? 4 : 3}>รวมทั้งหมด</td>
               <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
               <td className="p-2 text-right text-rose-600">฿{totalExpense.toLocaleString()}</td>
               <td className={`p-2 text-right ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
@@ -358,14 +393,16 @@ export default function LedgerPage({
       {mode && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-          onClick={() => setMode(null)}
+          onClick={() => { setMode(null); setEditId(null); }}
         >
           <div
             className="bg-white rounded-lg shadow-xl w-full max-w-md p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">
-              {mode === "INCOME"
+              {editId !== null
+                ? `แก้ไขรายการ ${title}`
+                : mode === "INCOME"
                 ? `เพิ่มรายได้ ${title}`
                 : `${expenseLabel ?? "เพิ่มรายจ่าย"} ${title}`}
             </h2>
@@ -435,7 +472,7 @@ export default function LedgerPage({
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={() => setMode(null)}
+                  onClick={() => { setMode(null); setEditId(null); }}
                 >
                   ยกเลิก
                 </button>
