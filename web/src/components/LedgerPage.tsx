@@ -175,6 +175,12 @@ export default function LedgerPage({
   const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
   const totalExpense = visibleRows.reduce((s, r) => s + r.expense, 0);
   const net = totalIncome - totalExpense;
+  const expenseByCategory = visibleRows.reduce<Record<string, number>>((acc, r) => {
+    if (!r.expense) return acc;
+    const k = r.category || "ไม่ระบุ";
+    acc[k] = (acc[k] ?? 0) + r.expense;
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-4">
@@ -264,12 +270,18 @@ export default function LedgerPage({
         <div className="card">
           <div className="text-sm text-slate-500">รายจ่ายรวม</div>
           <div className="text-2xl font-bold text-rose-600">฿{totalExpense.toLocaleString()}</div>
-        </div>
-        <div className="card">
-          <div className="text-sm text-slate-500">ผลรวมสุทธิ</div>
-          <div className={`text-2xl font-bold ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-            ฿{net.toLocaleString()}
-          </div>
+          {Object.keys(expenseByCategory).length > 0 && (
+            <div className="mt-2 space-y-1 text-sm">
+              {Object.entries(expenseByCategory)
+                .sort((a, b) => b[1] - a[1])
+                .map(([cat, amt]) => (
+                  <div key={cat} className="flex justify-between text-slate-700">
+                    <span>{cat}</span>
+                    <span className="text-rose-600">฿{amt.toLocaleString()}</span>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       </div>
 
