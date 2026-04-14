@@ -39,6 +39,13 @@ export default function Assets() {
     queryKey: ["assets"],
     queryFn: async () => (await api.get("/assets")).data,
   });
+  const { data: constructionAssets = [] } = useQuery<any[]>({
+    queryKey: ["construction-assets"],
+    queryFn: async () => {
+      const all = (await api.get("/construction/installments")).data as any[];
+      return all.filter((i) => i.isAsset);
+    },
+  });
   const { data: categories = [] } = useQuery({
     queryKey: ["asset-categories"],
     queryFn: async () => (await api.get("/assets/categories")).data,
@@ -231,6 +238,44 @@ export default function Assets() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="card">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-bold">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
+          <div className="text-sm text-gray-600">
+            รวม ฿{constructionAssets.reduce((s, i) => s + i.amount, 0).toLocaleString()} ({constructionAssets.length} รายการ)
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left border-b">
+              <tr>
+                <th className="p-2">วันที่</th>
+                <th className="p-2">โครงการ</th>
+                <th className="p-2">ผู้รับเหมา</th>
+                <th className="p-2">รายละเอียด</th>
+                <th className="p-2 text-right">จำนวน</th>
+                <th className="p-2">ใบเสร็จ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {constructionAssets.map((i) => (
+                <tr key={i.id} className="border-b">
+                  <td className="p-2">{dayjs(i.date).format("DD/MM/YYYY")}</td>
+                  <td className="p-2">{i.projectName}</td>
+                  <td className="p-2">{i.contractor ?? "-"}</td>
+                  <td className="p-2">{i.description}</td>
+                  <td className="p-2 text-right">฿{i.amount.toLocaleString()}</td>
+                  <td className="p-2">{i.receiptNo ?? "-"}</td>
+                </tr>
+              ))}
+              {constructionAssets.length === 0 && (
+                <tr><td colSpan={6} className="p-4 text-center text-gray-500">ยังไม่มีงวดที่ถูกทำเครื่องหมายว่าเป็นทรัพย์สิน</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {confirmDel && (

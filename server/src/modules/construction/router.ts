@@ -107,7 +107,7 @@ constructionRouter.get(
       orderBy: { date: "desc" },
     });
     res.json(
-      items.map((i) => ({
+      items.map((i: any) => ({
         id: i.id,
         projectId: i.projectId,
         projectName: i.project.name,
@@ -115,6 +115,8 @@ constructionRouter.get(
         date: i.date,
         description: i.description,
         amount: i.amount,
+        withholdingTax: i.withholdingTax,
+        isAsset: !!i.isAsset,
         receiptNo: i.receiptNo,
       }))
     );
