@@ -260,7 +260,7 @@ export default function LedgerPage({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {!hideIncome && (
           <div className="card">
             <div className="text-sm text-slate-500">รายรับรวม</div>
