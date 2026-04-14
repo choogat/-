@@ -40,7 +40,7 @@ export default function InvestmentExpenses() {
       ledgerType="INVESTMENT"
       hideIncome
       expenseLabel="ยอดลงทุน"
-      categoryOptions={["เงินสด", "โครงสร้าง"]}
+      categoryOptions={["เงินสด", "โครงสร้าง", "สิ่งของ", "ของใช้", "อื่นๆ"]}
       categoryLabel="ประเภท"
       showPartyFilter
       partyLabel="ผู้รับเงิน"
