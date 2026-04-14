@@ -271,14 +271,25 @@ export default function LedgerPage({
           <div className="text-base text-slate-600">รายจ่ายรวม</div>
           <div className="text-4xl font-extrabold text-rose-600">฿{totalExpense.toLocaleString()}</div>
         </div>
-        {Object.entries(expenseByCategory)
-          .sort((a, b) => b[1] - a[1])
-          .map(([cat, amt]) => (
-            <div key={cat} className="card">
-              <div className="text-sm text-slate-500">{cat}</div>
-              <div className="text-xl font-bold text-rose-600">฿{amt.toLocaleString()}</div>
-            </div>
-          ))}
+        {(() => {
+          const allCats = Array.from(
+            new Set([
+              ...(categoryOptions ?? []),
+              ...visibleRows.map((r) => r.category).filter(Boolean) as string[],
+            ])
+          );
+          return allCats
+            .map((cat) => [cat, expenseByCategory[cat] ?? 0] as const)
+            .sort((a, b) => b[1] - a[1])
+            .map(([cat, amt]) => (
+              <div key={cat} className="card">
+                <div className="text-sm text-slate-500">{cat}</div>
+                <div className={`text-xl font-bold ${amt > 0 ? "text-rose-600" : "text-slate-400"}`}>
+                  ฿{amt.toLocaleString()}
+                </div>
+              </div>
+            ));
+        })()}
       </div>
 
       <div className="card overflow-x-auto">
