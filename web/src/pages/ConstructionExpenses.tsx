@@ -432,7 +432,6 @@ function InstallmentModal({
   const [amount, setAmount] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
   const [hasWht, setHasWht] = useState(false);
-  const [isAsset, setIsAsset] = useState(false);
   const [deleteInst, setDeleteInst] = useState<Installment | null>(null);
   const [editInst, setEditInst] = useState<Installment | null>(null);
 
@@ -454,7 +453,6 @@ function InstallmentModal({
         amount: Number(amount),
         receiptNo: receiptNo || null,
         hasWht,
-        isAsset,
       });
     },
     onSuccess: () => {
@@ -463,7 +461,6 @@ function InstallmentModal({
       setAmount("");
       setReceiptNo("");
       setHasWht(false);
-      setIsAsset(false);
       qc.invalidateQueries({ queryKey: ["construction-installments", project.id] });
       onChanged();
     },
@@ -529,14 +526,6 @@ function InstallmentModal({
               </span>
             )}
           </label>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={isAsset}
-              onChange={(e) => setIsAsset(e.target.checked)}
-            />
-            <span>เป็นทรัพย์สิน</span>
-          </label>
         </div>
         <div className="flex justify-end mt-2">
           <button
@@ -565,7 +554,6 @@ function InstallmentModal({
               <th className="p-2">รายละเอียด</th>
               <th className="p-2 text-right">จำนวน</th>
               <th className="p-2 text-right">หักภาษี 3%</th>
-              <th className="p-2 text-center">ทรัพย์สิน</th>
               <th className="p-2">ใบเสร็จ</th>
               <th className="p-2"></th>
             </tr>
@@ -579,9 +567,6 @@ function InstallmentModal({
                 <td className="p-2 text-right">{fmt(i.amount)}</td>
                 <td className="p-2 text-right text-purple-700">
                   {i.withholdingTax > 0 ? fmt(i.withholdingTax) : "-"}
-                </td>
-                <td className="p-2 text-center">
-                  {i.isAsset ? <span className="text-indigo-700">✓</span> : "-"}
                 </td>
                 <td className="p-2">{i.receiptNo ?? "-"}</td>
                 <td className="p-2 text-right">
@@ -602,7 +587,7 @@ function InstallmentModal({
             ))}
             {listQ.data?.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-4 text-center text-slate-500">
+                <td colSpan={7} className="p-4 text-center text-slate-500">
                   ยังไม่มีการจ่ายงวด
                 </td>
               </tr>
@@ -667,7 +652,6 @@ function EditInstallmentModal({
   const [amount, setAmount] = useState(String(installment.amount));
   const [receiptNo, setReceiptNo] = useState(installment.receiptNo ?? "");
   const [hasWht, setHasWht] = useState((installment.withholdingTax || 0) > 0);
-  const [isAsset, setIsAsset] = useState(!!installment.isAsset);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -677,7 +661,6 @@ function EditInstallmentModal({
         amount: Number(amount),
         receiptNo: receiptNo || null,
         hasWht,
-        isAsset,
       });
     },
     onSuccess: () => {
@@ -710,10 +693,6 @@ function EditInstallmentModal({
               (= {fmt((Number(amount) / 0.99) * 0.03)} บาท)
             </span>
           )}
-        </label>
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={isAsset} onChange={(e) => setIsAsset(e.target.checked)} />
-          <span>เป็นทรัพย์สิน</span>
         </label>
       </div>
       <div className="flex justify-end gap-2 mt-4">
