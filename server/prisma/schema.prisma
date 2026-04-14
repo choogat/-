@@ -238,13 +238,14 @@ model ConstructionProject {
 }
 
 model ConstructionExpense {
-  id          Int                 @id @default(autoincrement())
-  projectId   Int
-  project     ConstructionProject @relation(fields: [projectId], references: [id])
-  date        DateTime
-  description String
-  amount      Float
-  receiptNo   String?
+  id              Int                 @id @default(autoincrement())
+  projectId       Int
+  project         ConstructionProject @relation(fields: [projectId], references: [id])
+  date            DateTime
+  description     String
+  amount          Float
+  withholdingTax  Float               @default(0)
+  receiptNo       String?
 }
 
 model Event {
