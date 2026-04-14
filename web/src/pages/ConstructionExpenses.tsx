@@ -88,7 +88,7 @@ export default function ConstructionExpenses() {
               <th className="p-3 text-right">%คงเหลือ</th>
               <th className="p-3 text-center">งวด</th>
               <th className="p-3 text-center">สถานะ</th>
-              <th className="p-3 text-right">ทรัพย์สิน</th>
+              <th className="p-3 text-center">ทรัพย์สิน</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -122,7 +122,13 @@ export default function ConstructionExpenses() {
                       {p.status}
                     </span>
                   </td>
-                  <td className="p-3 text-right text-indigo-700">{fmt(p.assetTotal ?? 0)}</td>
+                  <td className="p-3 text-center">
+                    {(p.assetTotal ?? 0) > 0 ? (
+                      <span className="text-indigo-700 font-medium">ใช่</span>
+                    ) : (
+                      <span className="text-slate-400">ไม่ใช่</span>
+                    )}
+                  </td>
                   <td className="p-3 text-right">
                     <button
                       onClick={() => setSelectedId(p.id)}
@@ -334,17 +340,6 @@ function EditProjectModal({
   const [endDate, setEndDate] = useState(project.endDate ? project.endDate.slice(0, 10) : "");
   const [status, setStatus] = useState(project.status);
 
-  const listQ = useQuery<Installment[]>({
-    queryKey: ["construction-installments", project.id],
-    queryFn: async () =>
-      (await api.get(`/construction/projects/${project.id}/installments`)).data,
-  });
-
-  const [assetMap, setAssetMap] = useState<Record<number, boolean>>({});
-  const instList = listQ.data ?? [];
-  const effectiveAsset = (i: Installment) =>
-    assetMap[i.id] !== undefined ? assetMap[i.id] : !!i.isAsset;
-
   const save = useMutation({
     mutationFn: async () => {
       await api.patch(`/construction/projects/${project.id}`, {
@@ -355,12 +350,6 @@ function EditProjectModal({
         endDate: endDate || null,
         status,
       });
-      const changed = instList.filter((i) => assetMap[i.id] !== undefined && assetMap[i.id] !== !!i.isAsset);
-      await Promise.all(
-        changed.map((i) =>
-          api.patch(`/construction/installments/${i.id}`, { isAsset: assetMap[i.id] })
-        )
-      );
     },
     onSuccess: () => {
       toast.success("บันทึกการแก้ไขแล้ว");
@@ -397,46 +386,6 @@ function EditProjectModal({
           </select>
         </Field>
 
-        <div>
-          <div className="text-sm text-slate-600 mb-1">ทรัพย์สิน (เลือกงวดที่เป็นทรัพย์สิน)</div>
-          <div className="border rounded max-h-60 overflow-y-auto">
-            {instList.length === 0 ? (
-              <div className="p-3 text-center text-slate-500 text-sm">ยังไม่มีงวดการจ่าย</div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left sticky top-0">
-                  <tr>
-                    <th className="p-2 w-10 text-center">เลือก</th>
-                    <th className="p-2">วันที่</th>
-                    <th className="p-2">รายละเอียด</th>
-                    <th className="p-2 text-right">จำนวน</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {instList.map((i) => (
-                    <tr key={i.id} className="border-t">
-                      <td className="p-2 text-center">
-                        <input
-                          type="checkbox"
-                          checked={effectiveAsset(i)}
-                          onChange={(e) =>
-                            setAssetMap((m) => ({ ...m, [i.id]: e.target.checked }))
-                          }
-                        />
-                      </td>
-                      <td className="p-2">{fmtDate(i.date)}</td>
-                      <td className="p-2">{i.description}</td>
-                      <td className="p-2 text-right">{fmt(i.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-          <div className="text-xs text-slate-500 mt-1">
-            รวมทรัพย์สิน: {fmt(instList.filter(effectiveAsset).reduce((s, i) => s + i.amount, 0))} บาท
-          </div>
-        </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={onClose} className="px-4 py-2 rounded border">ยกเลิก</button>
