@@ -263,6 +263,7 @@ export default function LedgerPage({
             <tr>
               <th className="p-2">วันที่</th>
               {showPartyColumn && <th className="p-2">{partyLabel ?? "ผู้รับเงิน"}</th>}
+              <th className="p-2">{categoryLabel ?? "ประเภท"}</th>
               <th className="p-2">รายละเอียด</th>
               <th className="p-2 text-right">รายรับ</th>
               <th className="p-2 text-right">รายจ่าย</th>
@@ -272,7 +273,7 @@ export default function LedgerPage({
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={showPartyColumn ? 7 : 6}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={showPartyColumn ? 8 : 7}>ไม่มีข้อมูล</td></tr>
             )}
             {visibleRows.map((r) => {
               const diff = r.income - r.expense;
@@ -280,6 +281,7 @@ export default function LedgerPage({
                 <tr key={r.id} className="border-b align-top">
                   <td className="p-2">{dayjs(r.date).format("DD/MM/YYYY")}</td>
                   {showPartyColumn && <td className="p-2">{r.party}</td>}
+                  <td className="p-2">{r.category || "-"}</td>
                   <td className="p-2 text-slate-600">{r.detail || "-"}</td>
                   <td className="p-2 text-right text-emerald-600">
                     {r.income ? `฿${r.income.toLocaleString()}` : "-"}
