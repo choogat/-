@@ -111,6 +111,7 @@ constructionRouter.get(
         id: i.id,
         projectId: i.projectId,
         projectName: i.project.name,
+        projectStartDate: i.project.startDate,
         contractor: i.project.contractor,
         date: i.date,
         description: i.description,

@@ -243,15 +243,14 @@ export default function Assets() {
       <div className="card">
         <h2 className="text-lg font-bold mb-2">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
         {(() => {
-          const byProject = constructionAssets.reduce<Record<string, { name: string; total: number }>>(
-            (acc, i) => {
-              const key = String(i.projectId);
-              if (!acc[key]) acc[key] = { name: i.projectName, total: 0 };
-              acc[key].total += i.amount;
-              return acc;
-            },
-            {}
-          );
+          const byProject = constructionAssets.reduce<
+            Record<string, { name: string; startDate: string | null; total: number }>
+          >((acc, i) => {
+            const key = String(i.projectId);
+            if (!acc[key]) acc[key] = { name: i.projectName, startDate: i.projectStartDate ?? null, total: 0 };
+            acc[key].total += i.amount;
+            return acc;
+          }, {});
           const rows = Object.values(byProject);
           const grand = rows.reduce((s, r) => s + r.total, 0);
           if (rows.length === 0) {
@@ -261,6 +260,8 @@ export default function Assets() {
             <table className="w-full text-sm">
               <thead className="text-left border-b">
                 <tr>
+                  <th className="p-2">วันที่เริ่ม</th>
+                  <th className="p-2">หมวด</th>
                   <th className="p-2">โครงการ</th>
                   <th className="p-2 text-right">ยอดรวม</th>
                 </tr>
@@ -268,12 +269,14 @@ export default function Assets() {
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.name} className="border-b">
+                    <td className="p-2">{r.startDate ? dayjs(r.startDate).format("DD/MM/YYYY") : "-"}</td>
+                    <td className="p-2">สิ่งก่อสร้าง</td>
                     <td className="p-2">{r.name}</td>
                     <td className="p-2 text-right">฿{r.total.toLocaleString()}</td>
                   </tr>
                 ))}
                 <tr className="font-bold bg-slate-50">
-                  <td className="p-2">รวมทั้งหมด</td>
+                  <td className="p-2" colSpan={3}>รวมทั้งหมด</td>
                   <td className="p-2 text-right text-indigo-700">฿{grand.toLocaleString()}</td>
                 </tr>
               </tbody>
