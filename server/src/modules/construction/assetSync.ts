@@ -9,21 +9,17 @@ async function ensureCategory() {
   return prisma.assetCategory.create({ data: { name: CATEGORY_NAME, type: AssetType.BUILDING } });
 }
 
-const codeFor = (expenseId: number) => `CON-EXP-${expenseId}`;
+const codeFor = (projectId: number) => `CON-PRJ-${projectId}`;
 
-export async function syncConstructionAsset(expenseId: number) {
-  const exp = await prisma.constructionExpense.findUnique({
-    where: { id: expenseId },
-    include: { project: true },
+export async function syncProjectAsset(projectId: number) {
+  const project = await prisma.constructionProject.findUnique({
+    where: { id: projectId },
+    include: { expenses: true },
   });
-  if (!exp) {
-    await prisma.asset.deleteMany({ where: { code: codeFor(expenseId) } });
-    return;
-  }
-  const shouldBeAsset = (exp as any).isAsset || (exp.project as any).isAsset;
-  const code = codeFor(expenseId);
+  const code = codeFor(projectId);
   const existing = await prisma.asset.findUnique({ where: { code } });
 
+  const shouldBeAsset = !!project && (project as any).isAsset;
   if (!shouldBeAsset) {
     if (existing) {
       await prisma.assetDepreciationLog.deleteMany({ where: { assetId: existing.id } });
@@ -33,15 +29,17 @@ export async function syncConstructionAsset(expenseId: number) {
   }
 
   const cat = await ensureCategory();
-  const name = `${exp.project.name}${exp.description ? ` - ${exp.description}` : ""}`;
+  const total = project!.expenses.reduce((s, e) => s + e.amount, 0);
+  const acquireDate = project!.startDate ?? project!.expenses[0]?.date ?? new Date();
+
   if (existing) {
     await prisma.asset.update({
       where: { id: existing.id },
       data: {
-        name,
-        acquireDate: exp.date,
-        costPrice: exp.amount,
-        currentValue: exp.amount - existing.accumulatedDepreciation,
+        name: project!.name,
+        acquireDate,
+        costPrice: total,
+        currentValue: total - existing.accumulatedDepreciation,
       },
     });
   } else {
@@ -49,22 +47,21 @@ export async function syncConstructionAsset(expenseId: number) {
       data: {
         code,
         categoryId: cat.id,
-        name,
-        description: `อัตโนมัติจากค่าก่อสร้าง #${exp.id}`,
-        acquireDate: exp.date,
-        costPrice: exp.amount,
-        currentValue: exp.amount,
+        name: project!.name,
+        description: `อัตโนมัติจากโครงการก่อสร้าง #${project!.id}`,
+        acquireDate,
+        costPrice: total,
+        currentValue: total,
       },
     });
   }
 }
 
-export async function syncProjectAssets(projectId: number) {
-  const expenses = await prisma.constructionExpense.findMany({ where: { projectId } });
-  for (const e of expenses) await syncConstructionAsset(e.id);
-}
-
 export async function backfillAllConstructionAssets() {
-  const expenses = await prisma.constructionExpense.findMany();
-  for (const e of expenses) await syncConstructionAsset(e.id);
+  await prisma.assetDepreciationLog.deleteMany({
+    where: { asset: { code: { startsWith: "CON-EXP-" } } },
+  });
+  await prisma.asset.deleteMany({ where: { code: { startsWith: "CON-EXP-" } } });
+  const projects = await prisma.constructionProject.findMany({ select: { id: true } });
+  for (const p of projects) await syncProjectAsset(p.id);
 }

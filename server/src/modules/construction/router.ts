@@ -4,7 +4,7 @@ import { Role } from "../../lib/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { ah } from "../../utils/asyncHandler.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
-import { syncConstructionAsset, syncProjectAssets } from "./assetSync.js";
+import { syncProjectAsset } from "./assetSync.js";
 
 export const constructionRouter = Router();
 constructionRouter.use(requireAuth);
@@ -90,7 +90,7 @@ constructionRouter.patch(
     if (b.endDate !== undefined) data.endDate = b.endDate ? new Date(b.endDate) : null;
     if (b.isAsset !== undefined) data.isAsset = !!b.isAsset;
     const item = await prisma.constructionProject.update({ where: { id }, data });
-    if (b.isAsset !== undefined) await syncProjectAssets(id);
+    await syncProjectAsset(id);
     res.json(item);
   })
 );
@@ -100,9 +100,10 @@ constructionRouter.delete(
   requireRole(Role.ADMIN, Role.MANAGER),
   ah(async (req, res) => {
     const id = Number(req.params.id);
-    const exps = await prisma.constructionExpense.findMany({ where: { projectId: id }, select: { id: true } });
-    for (const e of exps) {
-      await prisma.asset.deleteMany({ where: { code: `CON-EXP-${e.id}` } });
+    const asset = await prisma.asset.findUnique({ where: { code: `CON-PRJ-${id}` } });
+    if (asset) {
+      await prisma.assetDepreciationLog.deleteMany({ where: { assetId: asset.id } });
+      await prisma.asset.delete({ where: { id: asset.id } });
     }
     await prisma.constructionExpense.deleteMany({ where: { projectId: id } });
     await prisma.constructionProject.delete({ where: { id } });
@@ -176,7 +177,7 @@ constructionRouter.post(
         receiptNo: body.receiptNo || null,
       } as any,
     });
-    await syncConstructionAsset(item.id);
+    await syncProjectAsset(projectId);
     res.status(201).json(item);
   })
 );
@@ -200,7 +201,7 @@ constructionRouter.patch(
       data.withholdingTax = b.hasWht ? (amt / 0.99) * 0.03 : 0;
     }
     const item = await prisma.constructionExpense.update({ where: { id }, data });
-    await syncConstructionAsset(id);
+    await syncProjectAsset(item.projectId);
     res.json(item);
   })
 );
@@ -210,12 +211,9 @@ constructionRouter.delete(
   requireRole(Role.ADMIN, Role.MANAGER),
   ah(async (req, res) => {
     const id = Number(req.params.id);
-    const asset = await prisma.asset.findUnique({ where: { code: `CON-EXP-${id}` } });
-    if (asset) {
-      await prisma.assetDepreciationLog.deleteMany({ where: { assetId: asset.id } });
-      await prisma.asset.delete({ where: { id: asset.id } });
-    }
+    const exp = await prisma.constructionExpense.findUnique({ where: { id } });
     await prisma.constructionExpense.delete({ where: { id } });
+    if (exp) await syncProjectAsset(exp.projectId);
     res.status(204).end();
   })
 );
