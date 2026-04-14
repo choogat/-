@@ -35,6 +35,7 @@ export default function ConstructionExpenses() {
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showAddProject, setShowAddProject] = useState(false);
+  const [editTarget, setEditTarget] = useState<Project | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const projectsQ = useQuery<Project[]>({
@@ -126,6 +127,12 @@ export default function ConstructionExpenses() {
                       งวดการจ่าย
                     </button>
                     <button
+                      onClick={() => setEditTarget(p)}
+                      className="text-amber-600 hover:underline mr-2"
+                    >
+                      แก้ไข
+                    </button>
+                    <button
                       onClick={() => setDeleteTarget(p)}
                       className="text-red-600 hover:underline"
                     >
@@ -152,6 +159,17 @@ export default function ConstructionExpenses() {
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["construction-projects"] });
             setShowAddProject(false);
+          }}
+        />
+      )}
+
+      {editTarget && (
+        <EditProjectModal
+          project={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["construction-projects"] });
+            setEditTarget(null);
           }}
         />
       )}
@@ -281,6 +299,85 @@ function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
         <button onClick={onClose} className="px-4 py-2 rounded border">
           ยกเลิก
         </button>
+        <button
+          onClick={() => {
+            if (!name || !budget) return toast.error("กรอกชื่อและยอด");
+            save.mutate();
+          }}
+          disabled={save.isPending}
+          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+        >
+          บันทึก
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function EditProjectModal({
+  project,
+  onClose,
+  onSaved,
+}: {
+  project: Project;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(project.name);
+  const [contractor, setContractor] = useState(project.contractor ?? "");
+  const [budget, setBudget] = useState(String(project.budget));
+  const [startDate, setStartDate] = useState(project.startDate ? project.startDate.slice(0, 10) : "");
+  const [endDate, setEndDate] = useState(project.endDate ? project.endDate.slice(0, 10) : "");
+  const [status, setStatus] = useState(project.status);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      await api.patch(`/construction/projects/${project.id}`, {
+        name,
+        contractor: contractor || null,
+        budget: Number(budget),
+        startDate: startDate || null,
+        endDate: endDate || null,
+        status,
+      });
+    },
+    onSuccess: () => {
+      toast.success("บันทึกการแก้ไขแล้ว");
+      onSaved();
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? "ผิดพลาด"),
+  });
+
+  return (
+    <Modal title="แก้ไขโครงการก่อสร้าง" onClose={onClose}>
+      <div className="space-y-3">
+        <Field label="ชื่อโครงการ *">
+          <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
+        </Field>
+        <Field label="ผู้รับเหมา">
+          <input value={contractor} onChange={(e) => setContractor(e.target.value)} className="input" />
+        </Field>
+        <Field label="ยอดค่าใช้จ่ายทั้งหมด (บาท) *">
+          <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="วันที่เริ่ม">
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" />
+          </Field>
+          <Field label="วันที่สิ้นสุด">
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" />
+          </Field>
+        </div>
+        <Field label="สถานะ">
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="input">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="DONE">DONE</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </Field>
+      </div>
+      <div className="flex justify-end gap-2 mt-4">
+        <button onClick={onClose} className="px-4 py-2 rounded border">ยกเลิก</button>
         <button
           onClick={() => {
             if (!name || !budget) return toast.error("กรอกชื่อและยอด");
