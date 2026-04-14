@@ -39,13 +39,9 @@ export default function Assets() {
     queryKey: ["assets"],
     queryFn: async () => (await api.get("/assets")).data,
   });
-  const { data: constructionAssets = [] } = useQuery<any[]>({
-    queryKey: ["construction-assets"],
-    queryFn: async () => {
-      const all = (await api.get("/construction/installments")).data as any[];
-      return all.filter((i) => i.isAsset);
-    },
-  });
+  const constructionAssets = (data as any[]).filter(
+    (a) => typeof a.code === "string" && a.code.startsWith("CON-PRJ-")
+  );
   const { data: categories = [] } = useQuery({
     queryKey: ["asset-categories"],
     queryFn: async () => (await api.get("/assets/categories")).data,
@@ -243,47 +239,43 @@ export default function Assets() {
 
       <div className="card">
         <h2 className="text-lg font-bold mb-2">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
-        {(() => {
-          const byProject = constructionAssets.reduce<
-            Record<string, { name: string; startDate: string | null; total: number }>
-          >((acc, i) => {
-            const key = String(i.projectId);
-            if (!acc[key]) acc[key] = { name: i.projectName, startDate: i.projectStartDate ?? null, total: 0 };
-            acc[key].total += i.amount;
-            return acc;
-          }, {});
-          const rows = Object.values(byProject);
-          const grand = rows.reduce((s, r) => s + r.total, 0);
-          if (rows.length === 0) {
-            return <div className="text-gray-500 text-sm">ยังไม่มีงวดที่ถูกทำเครื่องหมายว่าเป็นทรัพย์สิน</div>;
-          }
-          return (
-            <table className="w-full text-sm">
-              <thead className="text-left border-b">
-                <tr>
-                  <th className="p-2">วันที่เริ่ม</th>
-                  <th className="p-2">หมวด</th>
-                  <th className="p-2">โครงการ</th>
-                  <th className="p-2 text-right">ยอดรวม</th>
+        {constructionAssets.length === 0 ? (
+          <div className="text-gray-500 text-sm">ยังไม่มีโครงการที่ถูกทำเครื่องหมายว่าเป็นทรัพย์สิน</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="text-left border-b">
+              <tr>
+                <th className="p-2">รหัส</th>
+                <th className="p-2">วันที่ได้มา</th>
+                <th className="p-2">หมวด</th>
+                <th className="p-2">โครงการ</th>
+                <th className="p-2 text-right">ราคาทุน</th>
+                <th className="p-2 text-right">ค่าเสื่อมสะสม</th>
+                <th className="p-2 text-right">มูลค่าปัจจุบัน</th>
+              </tr>
+            </thead>
+            <tbody>
+              {constructionAssets.map((a: any) => (
+                <tr key={a.id} className="border-b">
+                  <td className="p-2 font-mono">{a.code}</td>
+                  <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
+                  <td className="p-2">{a.category?.name ?? "งานก่อสร้าง"}</td>
+                  <td className="p-2">{a.name}</td>
+                  <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
+                  <td className="p-2 text-right">฿{a.accumulatedDepreciation.toLocaleString()}</td>
+                  <td className="p-2 text-right font-medium">฿{a.currentValue.toLocaleString()}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.name} className="border-b">
-                    <td className="p-2">{r.startDate ? dayjs(r.startDate).format("DD/MM/YYYY") : "-"}</td>
-                    <td className="p-2">สิ่งก่อสร้าง</td>
-                    <td className="p-2">{r.name}</td>
-                    <td className="p-2 text-right">฿{r.total.toLocaleString()}</td>
-                  </tr>
-                ))}
-                <tr className="font-bold bg-slate-50">
-                  <td className="p-2" colSpan={3}>รวมทั้งหมด</td>
-                  <td className="p-2 text-right text-indigo-700">฿{grand.toLocaleString()}</td>
-                </tr>
-              </tbody>
-            </table>
-          );
-        })()}
+              ))}
+              <tr className="font-bold bg-slate-50">
+                <td className="p-2" colSpan={4}>รวมทั้งหมด</td>
+                <td className="p-2 text-right text-indigo-700">
+                  ฿{constructionAssets.reduce((s, a) => s + a.costPrice, 0).toLocaleString()}
+                </td>
+                <td colSpan={2}></td>
+              </tr>
+            </tbody>
+          </table>
+        )}
       </div>
 
       {confirmDel && (
