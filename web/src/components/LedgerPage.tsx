@@ -260,36 +260,38 @@ export default function LedgerPage({
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {!hideIncome && (
-          <div className="card">
-            <div className="text-sm text-slate-500">รายรับรวม</div>
-            <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
-          </div>
-        )}
-        <div className="card md:col-span-2 bg-rose-50 border-rose-200">
-          <div className="text-base text-slate-600">รายจ่ายรวม</div>
-          <div className="text-4xl font-extrabold text-rose-600">฿{totalExpense.toLocaleString()}</div>
-        </div>
-        {(() => {
-          const allCats = Array.from(
-            new Set([
-              ...(categoryOptions ?? []),
-              ...visibleRows.map((r) => r.category).filter(Boolean) as string[],
-            ])
-          );
-          return allCats
-            .map((cat) => [cat, expenseByCategory[cat] ?? 0] as const)
-            .sort((a, b) => b[1] - a[1])
-            .map(([cat, amt]) => (
-              <div key={cat} className="card">
-                <div className="text-sm text-slate-500">{cat}</div>
-                <div className={`text-xl font-bold ${amt > 0 ? "text-rose-600" : "text-slate-400"}`}>
-                  ฿{amt.toLocaleString()}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:col-span-3">
+          {!hideIncome && (
+            <div className="card">
+              <div className="text-sm text-slate-500">รายรับรวม</div>
+              <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
+            </div>
+          )}
+          {(() => {
+            const allCats = Array.from(
+              new Set([
+                ...(categoryOptions ?? []),
+                ...visibleRows.map((r) => r.category).filter(Boolean) as string[],
+              ])
+            );
+            return allCats
+              .map((cat) => [cat, expenseByCategory[cat] ?? 0] as const)
+              .sort((a, b) => b[1] - a[1])
+              .map(([cat, amt]) => (
+                <div key={cat} className="card">
+                  <div className="text-sm text-slate-500">{cat}</div>
+                  <div className={`text-xl font-bold ${amt > 0 ? "text-rose-600" : "text-slate-400"}`}>
+                    ฿{amt.toLocaleString()}
+                  </div>
                 </div>
-              </div>
-            ));
-        })()}
+              ));
+          })()}
+        </div>
+        <div className="card bg-rose-50 border-rose-200 flex flex-col justify-center items-center text-center">
+          <div className="text-base text-slate-600">รายจ่ายรวม</div>
+          <div className="text-4xl font-extrabold text-rose-600 mt-2">฿{totalExpense.toLocaleString()}</div>
+        </div>
       </div>
 
       <div className="card overflow-x-auto">
