@@ -73,6 +73,7 @@ export default function Assets() {
 
   const s = search.trim().toLowerCase();
   const filtered = data.filter((a: any) => {
+    if (typeof a.code === "string" && a.code.startsWith("CON-PRJ-")) return false;
     if (filterCategory && String(a.categoryId) !== filterCategory) return false;
     if (filterStatus && a.status !== filterStatus) return false;
     if (s && ![a.code, a.name, a.location ?? "", a.description ?? ""]
