@@ -47,7 +47,7 @@ export default function ConstructionExpenses() {
   const totalBudget = projectsQ.data?.reduce((s, p) => s + p.budget, 0) ?? 0;
   const totalPaid = projectsQ.data?.reduce((s, p) => s + p.paid, 0) ?? 0;
   const totalWht = (totalPaid / 0.99) * 0.03;
-  const totalRemain = totalBudget - totalPaid;
+  const totalRemain = totalBudget - totalPaid - totalWht;
 
   return (
     <div className="space-y-4">
@@ -96,7 +96,7 @@ export default function ConstructionExpenses() {
                   <td className="p-3 text-right text-green-700">{fmt(p.paid)}</td>
                   <td className="p-3 text-right text-purple-700">{fmt((p.paid / 0.99) * 0.03)}</td>
                   <td className="p-3 text-right font-semibold text-amber-700">
-                    {fmt(p.remaining)}
+                    {fmt(p.budget - p.paid - (p.paid / 0.99) * 0.03)}
                   </td>
                   <td className="p-3 text-center">
                     <div className="text-xs text-slate-500">{p.installmentCount} งวด</div>
@@ -314,7 +314,7 @@ function InstallmentModal({
   });
 
   const paid = listQ.data?.reduce((s, i) => s + i.amount, 0) ?? project.paid;
-  const remaining = project.budget - paid;
+  const remaining = project.budget - paid - (paid / 0.99) * 0.03;
 
   const add = useMutation({
     mutationFn: async () => {
