@@ -267,22 +267,18 @@ export default function LedgerPage({
             <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
           </div>
         )}
-        <div className="card">
-          <div className="text-sm text-slate-500">รายจ่ายรวม</div>
-          <div className="text-2xl font-bold text-rose-600">฿{totalExpense.toLocaleString()}</div>
-          {Object.keys(expenseByCategory).length > 0 && (
-            <div className="mt-2 space-y-1 text-sm">
-              {Object.entries(expenseByCategory)
-                .sort((a, b) => b[1] - a[1])
-                .map(([cat, amt]) => (
-                  <div key={cat} className="flex justify-between text-slate-700">
-                    <span>{cat}</span>
-                    <span className="text-rose-600">฿{amt.toLocaleString()}</span>
-                  </div>
-                ))}
-            </div>
-          )}
+        <div className="card md:col-span-2 bg-rose-50 border-rose-200">
+          <div className="text-base text-slate-600">รายจ่ายรวม</div>
+          <div className="text-4xl font-extrabold text-rose-600">฿{totalExpense.toLocaleString()}</div>
         </div>
+        {Object.entries(expenseByCategory)
+          .sort((a, b) => b[1] - a[1])
+          .map(([cat, amt]) => (
+            <div key={cat} className="card">
+              <div className="text-sm text-slate-500">{cat}</div>
+              <div className="text-xl font-bold text-rose-600">฿{amt.toLocaleString()}</div>
+            </div>
+          ))}
       </div>
 
       <div className="card overflow-x-auto">
