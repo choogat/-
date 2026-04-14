@@ -240,11 +240,46 @@ export default function Assets() {
         </table>
       </div>
 
-      <div className="card flex items-center justify-between">
-        <h2 className="text-lg font-bold">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
-        <div className="text-xl font-bold text-indigo-700">
-          ฿{constructionAssets.reduce((s, i) => s + i.amount, 0).toLocaleString()}
-        </div>
+      <div className="card">
+        <h2 className="text-lg font-bold mb-2">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
+        {(() => {
+          const byProject = constructionAssets.reduce<Record<string, { name: string; total: number }>>(
+            (acc, i) => {
+              const key = String(i.projectId);
+              if (!acc[key]) acc[key] = { name: i.projectName, total: 0 };
+              acc[key].total += i.amount;
+              return acc;
+            },
+            {}
+          );
+          const rows = Object.values(byProject);
+          const grand = rows.reduce((s, r) => s + r.total, 0);
+          if (rows.length === 0) {
+            return <div className="text-gray-500 text-sm">ยังไม่มีงวดที่ถูกทำเครื่องหมายว่าเป็นทรัพย์สิน</div>;
+          }
+          return (
+            <table className="w-full text-sm">
+              <thead className="text-left border-b">
+                <tr>
+                  <th className="p-2">โครงการ</th>
+                  <th className="p-2 text-right">ยอดรวม</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.name} className="border-b">
+                    <td className="p-2">{r.name}</td>
+                    <td className="p-2 text-right">฿{r.total.toLocaleString()}</td>
+                  </tr>
+                ))}
+                <tr className="font-bold bg-slate-50">
+                  <td className="p-2">รวมทั้งหมด</td>
+                  <td className="p-2 text-right text-indigo-700">฿{grand.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
 
       {confirmDel && (
