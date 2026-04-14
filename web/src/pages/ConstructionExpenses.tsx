@@ -14,6 +14,7 @@ type Project = {
   progressPct: number;
   paid: number;
   wht: number;
+  isAsset: boolean;
   assetTotal: number;
   remaining: number;
   installmentCount: number;
@@ -241,6 +242,7 @@ function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [budget, setBudget] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isAsset, setIsAsset] = useState(false);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -250,6 +252,7 @@ function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
         budget: Number(budget),
         startDate: startDate || null,
         endDate: endDate || null,
+        isAsset,
       });
     },
     onSuccess: () => {
@@ -304,6 +307,10 @@ function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
             />
           </Field>
         </div>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={isAsset} onChange={(e) => setIsAsset(e.target.checked)} />
+          <span>เป็นทรัพย์สิน</span>
+        </label>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={onClose} className="px-4 py-2 rounded border">
@@ -339,6 +346,7 @@ function EditProjectModal({
   const [startDate, setStartDate] = useState(project.startDate ? project.startDate.slice(0, 10) : "");
   const [endDate, setEndDate] = useState(project.endDate ? project.endDate.slice(0, 10) : "");
   const [status, setStatus] = useState(project.status);
+  const [isAsset, setIsAsset] = useState(!!(project as any).isAsset);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -349,6 +357,7 @@ function EditProjectModal({
         startDate: startDate || null,
         endDate: endDate || null,
         status,
+        isAsset,
       });
     },
     onSuccess: () => {
@@ -385,7 +394,10 @@ function EditProjectModal({
             <option value="CANCELLED">CANCELLED</option>
           </select>
         </Field>
-
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={isAsset} onChange={(e) => setIsAsset(e.target.checked)} />
+          <span>เป็นทรัพย์สิน</span>
+        </label>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={onClose} className="px-4 py-2 rounded border">ยกเลิก</button>

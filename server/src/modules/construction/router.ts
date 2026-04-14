@@ -19,7 +19,9 @@ constructionRouter.get(
     const result = projects.map((p) => {
       const paid = p.expenses.reduce((s, e) => s + e.amount, 0);
       const wht = p.expenses.reduce((s, e) => s + (e.withholdingTax || 0), 0);
-      const assetTotal = p.expenses.reduce((s, e: any) => s + (e.isAsset ? e.amount : 0), 0);
+      const assetTotal = (p as any).isAsset
+        ? paid
+        : p.expenses.reduce((s, e: any) => s + (e.isAsset ? e.amount : 0), 0);
       return {
         id: p.id,
         name: p.name,
@@ -31,6 +33,7 @@ constructionRouter.get(
         status: p.status,
         paid,
         wht,
+        isAsset: !!(p as any).isAsset,
         assetTotal,
         remaining: p.budget - paid - wht,
         installmentCount: p.expenses.length,
@@ -52,6 +55,7 @@ constructionRouter.post(
         startDate: z.string().optional().nullable(),
         endDate: z.string().optional().nullable(),
         status: z.string().optional(),
+        isAsset: z.boolean().optional(),
       })
       .parse(req.body);
     const item = await prisma.constructionProject.create({
@@ -62,7 +66,8 @@ constructionRouter.post(
         startDate: body.startDate ? new Date(body.startDate) : null,
         endDate: body.endDate ? new Date(body.endDate) : null,
         status: body.status ?? "ACTIVE",
-      },
+        isAsset: body.isAsset ?? false,
+      } as any,
     });
     res.status(201).json(item);
   })
@@ -82,6 +87,7 @@ constructionRouter.patch(
     if (b.progressPct !== undefined) data.progressPct = Number(b.progressPct);
     if (b.startDate !== undefined) data.startDate = b.startDate ? new Date(b.startDate) : null;
     if (b.endDate !== undefined) data.endDate = b.endDate ? new Date(b.endDate) : null;
+    if (b.isAsset !== undefined) data.isAsset = !!b.isAsset;
     const item = await prisma.constructionProject.update({ where: { id }, data });
     res.json(item);
   })

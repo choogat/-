@@ -233,6 +233,7 @@ model ConstructionProject {
   endDate     DateTime?
   progressPct Float     @default(0)
   status      String    @default("ACTIVE")
+  isAsset     Boolean   @default(false)
 
   expenses    ConstructionExpense[]
 }
