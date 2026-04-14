@@ -119,9 +119,15 @@ export default function ConstructionExpenses() {
                     </div>
                   </td>
                   <td className="p-3 text-center">
-                    <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
-                      {p.status}
-                    </span>
+                    {(() => {
+                      const map: Record<string, { label: string; cls: string }> = {
+                        ACTIVE: { label: "กำลังทำ", cls: "bg-yellow-100 text-yellow-800" },
+                        DONE: { label: "ทำเสร็จแล้ว", cls: "bg-green-100 text-green-800" },
+                        CANCELLED: { label: "ยกเลิก", cls: "bg-red-100 text-red-700" },
+                      };
+                      const s = map[p.status] ?? { label: p.status, cls: "bg-slate-100 text-slate-700" };
+                      return <span className={`text-xs px-2 py-1 rounded ${s.cls}`}>{s.label}</span>;
+                    })()}
                   </td>
                   <td className="p-3 text-center">
                     {(p.assetTotal ?? 0) > 0 ? (
@@ -389,9 +395,9 @@ function EditProjectModal({
         </div>
         <Field label="สถานะ">
           <select value={status} onChange={(e) => setStatus(e.target.value)} className="input">
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="DONE">DONE</option>
-            <option value="CANCELLED">CANCELLED</option>
+            <option value="ACTIVE">กำลังทำ</option>
+            <option value="DONE">ทำเสร็จแล้ว</option>
+            <option value="CANCELLED">ยกเลิก</option>
           </select>
         </Field>
         <label className="inline-flex items-center gap-2 text-sm">
