@@ -69,12 +69,6 @@ export default function InvestmentExpenses() {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <button className="px-3 py-1.5 text-sm border rounded hover:bg-slate-50"
-          onClick={() => setShowManage(true)}>
-          จัดการประเภท
-        </button>
-      </div>
       <LedgerPage
         title="ค่าใช้จ่ายในการลงทุน"
         ledgerType="INVESTMENT"
