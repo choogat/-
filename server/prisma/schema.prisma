@@ -245,6 +245,7 @@ model ConstructionExpense {
   description     String
   amount          Float
   withholdingTax  Float               @default(0)
+  isAsset         Boolean             @default(false)
   receiptNo       String?
 }
 

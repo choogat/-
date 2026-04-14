@@ -19,6 +19,7 @@ constructionRouter.get(
     const result = projects.map((p) => {
       const paid = p.expenses.reduce((s, e) => s + e.amount, 0);
       const wht = p.expenses.reduce((s, e) => s + (e.withholdingTax || 0), 0);
+      const assetTotal = p.expenses.reduce((s, e: any) => s + (e.isAsset ? e.amount : 0), 0);
       return {
         id: p.id,
         name: p.name,
@@ -30,6 +31,7 @@ constructionRouter.get(
         status: p.status,
         paid,
         wht,
+        assetTotal,
         remaining: p.budget - paid - wht,
         installmentCount: p.expenses.length,
       };
@@ -144,6 +146,7 @@ constructionRouter.post(
         amount: z.number().positive(),
         receiptNo: z.string().optional().nullable(),
         hasWht: z.boolean().optional(),
+        isAsset: z.boolean().optional(),
       })
       .parse(req.body);
     const withholdingTax = body.hasWht ? (body.amount / 0.99) * 0.03 : 0;
@@ -154,8 +157,9 @@ constructionRouter.post(
         description: body.description,
         amount: body.amount,
         withholdingTax,
+        isAsset: body.isAsset ?? false,
         receiptNo: body.receiptNo || null,
-      },
+      } as any,
     });
     res.status(201).json(item);
   })
@@ -172,6 +176,7 @@ constructionRouter.patch(
     if (b.description !== undefined) data.description = b.description;
     if (b.amount !== undefined) data.amount = Number(b.amount);
     if (b.receiptNo !== undefined) data.receiptNo = b.receiptNo || null;
+    if (b.isAsset !== undefined) data.isAsset = !!b.isAsset;
     if (b.hasWht !== undefined) {
       const amt = b.amount !== undefined
         ? Number(b.amount)
