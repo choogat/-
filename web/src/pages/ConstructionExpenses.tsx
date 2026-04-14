@@ -80,6 +80,7 @@ export default function ConstructionExpenses() {
               <th className="p-3 text-right">จ่ายแล้ว</th>
               <th className="p-3 text-right">หักภาษี ณ ที่จ่าย 3%</th>
               <th className="p-3 text-right">คงเหลือ</th>
+              <th className="p-3 text-right">%คงเหลือ</th>
               <th className="p-3 text-center">งวด</th>
               <th className="p-3 text-center">สถานะ</th>
               <th className="p-3"></th>
@@ -97,6 +98,11 @@ export default function ConstructionExpenses() {
                   <td className="p-3 text-right text-purple-700">{fmt((p.paid / 0.99) * 0.03)}</td>
                   <td className="p-3 text-right font-semibold text-amber-700">
                     {fmt(p.budget - p.paid - (p.paid / 0.99) * 0.03)}
+                  </td>
+                  <td className="p-3 text-right text-amber-700">
+                    {p.budget > 0
+                      ? ((p.budget - p.paid - (p.paid / 0.99) * 0.03) / p.budget * 100).toFixed(2)
+                      : "0.00"}%
                   </td>
                   <td className="p-3 text-center">
                     <div className="text-xs text-slate-500">{p.installmentCount} งวด</div>
@@ -131,7 +137,7 @@ export default function ConstructionExpenses() {
             })}
             {projectsQ.data?.length === 0 && (
               <tr>
-                <td colSpan={9} className="p-6 text-center text-slate-500">
+                <td colSpan={10} className="p-6 text-center text-slate-500">
                   ยังไม่มีโครงการ — กด "+ เพิ่มโครงการ" เพื่อเริ่ม
                 </td>
               </tr>
