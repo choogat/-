@@ -12,6 +12,7 @@ type ConstructionInstallment = {
   date: string;
   description: string;
   amount: number;
+  withholdingTax: number;
   receiptNo: string | null;
 };
 
@@ -63,7 +64,7 @@ export default function InvestmentExpenses() {
       category: "โครงสร้าง",
       detail: `${i.projectName} — ${i.description}${i.receiptNo ? ` #${i.receiptNo}` : ""}`,
       income: 0,
-      expense: i.amount,
+      expense: i.amount + (i.withholdingTax ?? 0),
     };
   });
 
