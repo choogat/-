@@ -125,7 +125,8 @@ export default function ConstructionExpenses() {
                         DONE: { label: "จบงาน", cls: "bg-green-100 text-green-800" },
                         CANCELLED: { label: "ยกเลิก", cls: "bg-red-100 text-red-700" },
                       };
-                      const s = map[p.status] ?? { label: p.status, cls: "bg-slate-100 text-slate-700" };
+                      const effStatus = p.status !== "CANCELLED" && (p.remaining ?? 0) < 1 ? "DONE" : p.status;
+                      const s = map[effStatus] ?? { label: effStatus, cls: "bg-slate-100 text-slate-700" };
                       return <span className={`text-xs px-2 py-1 rounded whitespace-nowrap inline-block ${s.cls}`}>{s.label}</span>;
                     })()}
                   </td>
