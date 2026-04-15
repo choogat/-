@@ -59,6 +59,7 @@ export default function LedgerPage({
     amount: 0,
     note: "",
     category: categoryOptions?.[0] ?? "",
+    quantity: 1,
   });
 
   const resetForm = () =>
@@ -68,12 +69,16 @@ export default function LedgerPage({
       amount: 0,
       note: "",
       category: categoryOptions?.[0] ?? "",
+      quantity: 1,
     });
 
   const save = useMutation({
     mutationFn: async () => {
+      const noteText = form.category === "สิ่งของ" && form.quantity && form.quantity !== 1
+        ? `${form.quantity} ${form.note}`.trim()
+        : form.note;
       const note =
-        [form.category ? `[${form.category}]` : "", form.note]
+        [form.category ? `[${form.category}]` : "", noteText]
           .filter(Boolean)
           .join(" ")
           .trim() || undefined;
@@ -358,12 +363,23 @@ export default function LedgerPage({
                             if (!ledgerItem) return;
                             setEditId(r.id);
                             setMode(ledgerItem.kind as Mode);
+                            const rawNote = r.detail.replace(/^\[[^\]]+\]\s*/, "");
+                            let qty = 1;
+                            let noteOnly = rawNote;
+                            if (r.category === "สิ่งของ") {
+                              const mm = rawNote.match(/^(\d+(?:\.\d+)?)\s+(.*)$/);
+                              if (mm) {
+                                qty = Number(mm[1]);
+                                noteOnly = mm[2];
+                              }
+                            }
                             setForm({
                               date: dayjs(ledgerItem.date).format("YYYY-MM-DD"),
                               party: ledgerItem.party ?? "",
                               amount: ledgerItem.amount ?? 0,
-                              note: r.detail.replace(/^\[[^\]]+\]\s*/, ""),
+                              note: noteOnly,
                               category: r.category ?? categoryOptions?.[0] ?? "",
+                              quantity: qty,
                             });
                           }}
                         >
@@ -494,6 +510,19 @@ export default function LedgerPage({
                   required
                 />
               </div>
+              {form.category === "สิ่งของ" && (
+                <div>
+                  <label className="label">จำนวน</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className="input"
+                    value={form.quantity}
+                    onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
+                  />
+                </div>
+              )}
               <div>
                 <label className="label">จำนวนเงิน (บาท)</label>
                 <input
