@@ -247,6 +247,7 @@ export default function Assets() {
           <thead className="text-left border-b">
             <tr>
               <th className="p-2">รหัส</th><th className="p-2">หมวด</th><th className="p-2">รายการ</th>
+              <th className="p-2 text-right">จำนวน</th>
               <th className="p-2">วันที่ได้มา</th><th className="p-2 text-right">ราคาทุน</th>
               <th className="p-2 text-right">ค่าเสื่อมสะสม</th><th className="p-2 text-right">มูลค่าปัจจุบัน</th>
               <th className="p-2"></th>
@@ -258,6 +259,7 @@ export default function Assets() {
                 <td className="p-2 font-mono">{a.code}</td>
                 <td className="p-2">{a.category.name}</td>
                 <td className="p-2">{a.name}</td>
+                <td className="p-2 text-right">{(a.quantity ?? 1).toLocaleString()}</td>
                 <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right">฿{a.accumulatedDepreciation.toLocaleString()}</td>
@@ -277,6 +279,7 @@ export default function Assets() {
                 <td className="p-2 font-mono">{a.code}</td>
                 <td className="p-2">สิ่งของ</td>
                 <td className="p-2">{a.name}</td>
+                <td className="p-2 text-right">1</td>
                 <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right text-slate-400">-</td>
@@ -285,7 +288,7 @@ export default function Assets() {
               </tr>
             ))}
             {filtered.length === 0 && investmentItems.length === 0 && (
-              <tr><td colSpan={8} className="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
+              <tr><td colSpan={9} className="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
             )}
           </tbody>
           {(filtered.length > 0 || investmentItems.length > 0) && (() => {
@@ -297,7 +300,7 @@ export default function Assets() {
             return (
               <tfoot>
                 <tr className="font-bold bg-slate-50 border-t">
-                  <td className="p-2" colSpan={4}>รวมทะเบียนทรัพย์สิน</td>
+                  <td className="p-2" colSpan={5}>รวมทะเบียนทรัพย์สิน</td>
                   <td className="p-2 text-right">฿{cost.toLocaleString()}</td>
                   <td className="p-2 text-right">฿{accum.toLocaleString()}</td>
                   <td className="p-2 text-right text-indigo-700">฿{cur.toLocaleString()}</td>
