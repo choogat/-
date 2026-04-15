@@ -246,9 +246,10 @@ export default function Assets() {
         <table className="w-full text-sm">
           <thead className="text-left border-b">
             <tr>
-              <th className="p-2">รหัส</th><th className="p-2">หมวด</th><th className="p-2">รายการ</th>
-              <th className="p-2 text-right">จำนวน</th>
-              <th className="p-2">วันที่ได้มา</th><th className="p-2 text-right">ราคาทุน</th>
+              <th className="p-2">รหัส</th>
+              <th className="p-2">วันที่ได้มา</th>
+              <th className="p-2">หมวด</th><th className="p-2">รายการ</th>
+              <th className="p-2 text-right">จำนวน</th><th className="p-2 text-right">ราคาทุน</th>
               <th className="p-2 text-right">ค่าเสื่อมสะสม</th><th className="p-2 text-right">มูลค่าปัจจุบัน</th>
               <th className="p-2"></th>
             </tr>
@@ -257,10 +258,10 @@ export default function Assets() {
             {filtered.map((a: any) => (
               <tr key={a.id} className="border-b">
                 <td className="p-2 font-mono">{a.code}</td>
+                <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2">{a.category.name}</td>
                 <td className="p-2">{a.name}</td>
                 <td className="p-2 text-right">{(a.quantity ?? 1).toLocaleString()}</td>
-                <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right">฿{a.accumulatedDepreciation.toLocaleString()}</td>
                 <td className="p-2 text-right font-medium">฿{a.currentValue.toLocaleString()}</td>
@@ -277,10 +278,10 @@ export default function Assets() {
             {investmentItems.map((a) => (
               <tr key={a.id} className="border-b bg-amber-50/40">
                 <td className="p-2 font-mono">{a.code}</td>
+                <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2">สิ่งของ</td>
                 <td className="p-2">{a.name}</td>
                 <td className="p-2 text-right">1</td>
-                <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right text-slate-400">-</td>
                 <td className="p-2 text-right font-medium">฿{a.costPrice.toLocaleString()}</td>
