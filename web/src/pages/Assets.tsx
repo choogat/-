@@ -82,6 +82,15 @@ export default function Assets() {
     onError: (e: any) => toast.error(e?.response?.data?.error ?? "ลบไม่สำเร็จ"),
   });
 
+  function extractQty(name: string, fallback: number): { name: string; qty: number } {
+    const m = name.match(/(\d+(?:\.\d+)?)/);
+    if (!m) return { name, qty: fallback };
+    const qty = Number(m[1]);
+    const cleaned = (name.slice(0, m.index!) + name.slice(m.index! + m[0].length))
+      .replace(/\s{2,}/g, " ").trim();
+    return { name: cleaned || name, qty };
+  }
+
   const s = search.trim().toLowerCase();
   const filtered = data.filter((a: any) => {
     if (typeof a.code === "string" && a.code.startsWith("CON-PRJ-")) return false;
@@ -255,13 +264,15 @@ export default function Assets() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((a: any) => (
+            {filtered.map((a: any) => {
+              const ex = extractQty(a.name, a.quantity ?? 1);
+              return (
               <tr key={a.id} className="border-b">
                 <td className="p-2 font-mono">{a.code}</td>
                 <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2">{a.category.name}</td>
-                <td className="p-2">{a.name}</td>
-                <td className="p-2 text-right">{(a.quantity ?? 1).toLocaleString()}</td>
+                <td className="p-2">{ex.name}</td>
+                <td className="p-2 text-right">{ex.qty.toLocaleString()}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right">฿{a.accumulatedDepreciation.toLocaleString()}</td>
                 <td className="p-2 text-right font-medium">฿{a.currentValue.toLocaleString()}</td>
@@ -274,20 +285,24 @@ export default function Assets() {
                   </button>
                 </td>
               </tr>
-            ))}
-            {investmentItems.map((a) => (
+              );
+            })}
+            {investmentItems.map((a) => {
+              const ex = extractQty(a.name, 1);
+              return (
               <tr key={a.id} className="border-b bg-amber-50/40">
                 <td className="p-2 font-mono">{a.code}</td>
                 <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2">สิ่งของ</td>
-                <td className="p-2">{a.name}</td>
-                <td className="p-2 text-right">1</td>
+                <td className="p-2">{ex.name}</td>
+                <td className="p-2 text-right">{ex.qty.toLocaleString()}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right text-slate-400">-</td>
                 <td className="p-2 text-right font-medium">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2"></td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && investmentItems.length === 0 && (
               <tr><td colSpan={9} className="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
             )}
