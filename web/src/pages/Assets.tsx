@@ -46,6 +46,21 @@ export default function Assets() {
     queryKey: ["asset-categories"],
     queryFn: async () => (await api.get("/assets/categories")).data,
   });
+  const { data: investmentLedger = [] } = useQuery<any[]>({
+    queryKey: ["utility-ledger", "INVESTMENT"],
+    queryFn: async () =>
+      (await api.get("/utility-ledger", { params: { utilityType: "INVESTMENT" } })).data,
+  });
+  const investmentItems = investmentLedger
+    .filter((l) => l.kind === "EXPENSE" && /^\[สิ่งของ\]/.test(l.note ?? ""))
+    .map((l) => ({
+      id: `inv-${l.id}`,
+      code: `INV-${l.id}`,
+      name: (l.note ?? "").replace(/^\[สิ่งของ\]\s*/, "") || l.party,
+      acquireDate: l.date,
+      costPrice: l.amount,
+      party: l.party,
+    }));
 
   const createMut = useMutation({
     mutationFn: async (payload: any) => (await api.post("/assets", payload)).data,
@@ -230,7 +245,19 @@ export default function Assets() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {investmentItems.map((a) => (
+              <tr key={a.id} className="border-b bg-amber-50/40">
+                <td className="p-2 font-mono">{a.code}</td>
+                <td className="p-2">สิ่งของ (ลงทุน)</td>
+                <td className="p-2">{a.name}{a.party ? ` — ${a.party}` : ""}</td>
+                <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
+                <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
+                <td className="p-2 text-right text-slate-400">-</td>
+                <td className="p-2 text-right font-medium">฿{a.costPrice.toLocaleString()}</td>
+                <td className="p-2 text-right text-xs text-slate-400">จากการลงทุน</td>
+              </tr>
+            ))}
+            {filtered.length === 0 && investmentItems.length === 0 && (
               <tr><td colSpan={8} className="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
             )}
           </tbody>
