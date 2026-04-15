@@ -289,20 +289,31 @@ export default function Assets() {
         const regCur = filtered.reduce((s: number, a: any) => s + a.currentValue, 0)
           + investmentItems.reduce((s, a) => s + a.costPrice, 0);
         const conCur = constructionAssets.reduce((s: number, a: any) => s + a.currentValue, 0);
+        const Section = ({ title, cost, cur, accent }: {
+          title: string; cost: number; cur: number; accent: string;
+        }) => (
+          <div className={`card ${accent}`}>
+            <div className="font-semibold mb-2">{title}</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-slate-500">ราคาทุน</div>
+                <div className="text-lg font-bold">฿{cost.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">มูลค่าปัจจุบัน</div>
+                <div className="text-lg font-bold">฿{cur.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        );
         return (
-          <div className="card bg-indigo-50 border-indigo-200 grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-sm text-slate-600">ยอดรวมราคาทุน (ทุกหมวด)</div>
-              <div className="text-2xl font-bold text-indigo-700">
-                ฿{(regCost + conCost).toLocaleString()}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-slate-600">ยอดรวมมูลค่าปัจจุบัน (ทุกหมวด)</div>
-              <div className="text-2xl font-bold text-indigo-700">
-                ฿{(regCur + conCur).toLocaleString()}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Section title="ทรัพย์สินจากการก่อสร้าง" cost={conCost} cur={conCur}
+              accent="bg-amber-50 border-amber-200" />
+            <Section title="ทะเบียนทรัพย์สิน" cost={regCost} cur={regCur}
+              accent="bg-sky-50 border-sky-200" />
+            <Section title="ยอดรวมทรัพย์สินทั้งหมด" cost={regCost + conCost} cur={regCur + conCur}
+              accent="bg-indigo-50 border-indigo-200" />
           </div>
         );
       })()}
