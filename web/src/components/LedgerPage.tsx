@@ -75,7 +75,7 @@ export default function LedgerPage({
   const save = useMutation({
     mutationFn: async () => {
       const noteText = form.category === "สิ่งของ" && form.quantity && form.quantity !== 1
-        ? `${form.note} ${form.quantity}`.trim()
+        ? `${form.note} จำนวน ${form.quantity}`.trim()
         : form.note;
       const note =
         [form.category ? `[${form.category}]` : "", noteText]
@@ -367,7 +367,7 @@ export default function LedgerPage({
                             let qty = 1;
                             let noteOnly = rawNote;
                             if (r.category === "สิ่งของ") {
-                              const mm = rawNote.match(/^(.*?)\s+(\d+(?:\.\d+)?)$/);
+                              const mm = rawNote.match(/^(.*?)\s*จำนวน\s+(\d+(?:\.\d+)?)$/);
                               if (mm) {
                                 noteOnly = mm[1];
                                 qty = Number(mm[2]);

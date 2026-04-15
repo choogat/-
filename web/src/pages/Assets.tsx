@@ -83,7 +83,7 @@ export default function Assets() {
   });
 
   function extractQty(name: string, fallback: number): { name: string; qty: number } {
-    const tail = name.match(/^(.*?)\s+(\d+(?:\.\d+)?)$/);
+    const tail = name.match(/^(.*?)\s*จำนวน\s+(\d+(?:\.\d+)?)$/);
     if (tail) return { name: tail[1].trim() || name, qty: Number(tail[2]) };
     const m = name.match(/(\d+(?:\.\d+)?)/);
     if (!m) return { name, qty: fallback };
