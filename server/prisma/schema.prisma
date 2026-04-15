@@ -341,6 +341,7 @@ model Asset {
   category                AssetCategory @relation(fields: [categoryId], references: [id])
   name                    String
   description             String?
+  quantity                Float         @default(1)
   acquireDate             DateTime
   costPrice               Float
   usefulLifeYears         Int           @default(0)
