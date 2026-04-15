@@ -126,7 +126,7 @@ export default function ConstructionExpenses() {
                         CANCELLED: { label: "ยกเลิก", cls: "bg-red-100 text-red-700" },
                       };
                       const s = map[p.status] ?? { label: p.status, cls: "bg-slate-100 text-slate-700" };
-                      return <span className={`text-xs px-2 py-1 rounded ${s.cls}`}>{s.label}</span>;
+                      return <span className={`text-xs px-2 py-1 rounded whitespace-nowrap inline-block ${s.cls}`}>{s.label}</span>;
                     })()}
                   </td>
                   <td className="p-3 text-center">
