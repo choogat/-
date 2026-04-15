@@ -122,6 +122,42 @@ export default function Assets() {
         </button>
       </div>
 
+      {(() => {
+        const regCost = filtered.reduce((s: number, a: any) => s + a.costPrice, 0)
+          + investmentItems.reduce((s, a) => s + a.costPrice, 0);
+        const conCost = constructionAssets.reduce((s: number, a: any) => s + a.costPrice, 0);
+        const regCur = filtered.reduce((s: number, a: any) => s + a.currentValue, 0)
+          + investmentItems.reduce((s, a) => s + a.costPrice, 0);
+        const conCur = constructionAssets.reduce((s: number, a: any) => s + a.currentValue, 0);
+        const Section = ({ title, cost, cur, accent }: {
+          title: string; cost: number; cur: number; accent: string;
+        }) => (
+          <div className={`card ${accent}`}>
+            <div className="font-semibold mb-2">{title}</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-slate-500">ราคาทุน</div>
+                <div className="text-lg font-bold">฿{cost.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">มูลค่าปัจจุบัน</div>
+                <div className="text-lg font-bold">฿{cur.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        );
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Section title="ทรัพย์สินจากการก่อสร้าง" cost={conCost} cur={conCur}
+              accent="bg-amber-50 border-amber-200" />
+            <Section title="ทะเบียนทรัพย์สิน" cost={regCost} cur={regCur}
+              accent="bg-sky-50 border-sky-200" />
+            <Section title="ยอดรวมทรัพย์สินทั้งหมด" cost={regCost + conCost} cur={regCur + conCur}
+              accent="bg-indigo-50 border-indigo-200" />
+          </div>
+        );
+      })()}
+
       {showForm && (
         <form onSubmit={submit} className="card grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="flex flex-col text-sm">
@@ -281,42 +317,6 @@ export default function Assets() {
           })()}
         </table>
       </div>
-
-      {(() => {
-        const regCost = filtered.reduce((s: number, a: any) => s + a.costPrice, 0)
-          + investmentItems.reduce((s, a) => s + a.costPrice, 0);
-        const conCost = constructionAssets.reduce((s: number, a: any) => s + a.costPrice, 0);
-        const regCur = filtered.reduce((s: number, a: any) => s + a.currentValue, 0)
-          + investmentItems.reduce((s, a) => s + a.costPrice, 0);
-        const conCur = constructionAssets.reduce((s: number, a: any) => s + a.currentValue, 0);
-        const Section = ({ title, cost, cur, accent }: {
-          title: string; cost: number; cur: number; accent: string;
-        }) => (
-          <div className={`card ${accent}`}>
-            <div className="font-semibold mb-2">{title}</div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-slate-500">ราคาทุน</div>
-                <div className="text-lg font-bold">฿{cost.toLocaleString()}</div>
-              </div>
-              <div>
-                <div className="text-xs text-slate-500">มูลค่าปัจจุบัน</div>
-                <div className="text-lg font-bold">฿{cur.toLocaleString()}</div>
-              </div>
-            </div>
-          </div>
-        );
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Section title="ทรัพย์สินจากการก่อสร้าง" cost={conCost} cur={conCur}
-              accent="bg-amber-50 border-amber-200" />
-            <Section title="ทะเบียนทรัพย์สิน" cost={regCost} cur={regCur}
-              accent="bg-sky-50 border-sky-200" />
-            <Section title="ยอดรวมทรัพย์สินทั้งหมด" cost={regCost + conCost} cur={regCur + conCur}
-              accent="bg-indigo-50 border-indigo-200" />
-          </div>
-        );
-      })()}
 
       <div className="card">
         <h2 className="text-lg font-bold mb-2">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
