@@ -165,12 +165,17 @@ export default function LedgerPage({
   );
   const [filterParty, setFilterParty] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterText, setFilterText] = useState<string>("");
   const allParties = Array.from(new Set(rows.map((r) => r.party).filter(Boolean))).sort();
   const visibleRows = rows.filter(
     (r) =>
       (!filterMonth || r.period === filterMonth) &&
       (!filterParty || r.party === filterParty) &&
-      (!filterCategory || r.category === filterCategory)
+      (!filterCategory || r.category === filterCategory) &&
+      (!filterText ||
+        [r.detail, r.party, r.category]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(filterText.toLowerCase())))
   );
 
   const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
@@ -247,13 +252,21 @@ export default function LedgerPage({
             </select>
           </>
         )}
-        {(filterMonth || filterParty || filterCategory) && (
+        <label className="label mb-0 ml-2">ค้นหา</label>
+        <input
+          className="input w-48"
+          placeholder="ค้นข้อความ..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+        />
+        {(filterMonth || filterParty || filterCategory || filterText) && (
           <button
             className="btn-secondary"
             onClick={() => {
               setFilterMonth("");
               setFilterParty("");
               setFilterCategory("");
+              setFilterText("");
             }}
           >
             ล้างตัวกรอง
