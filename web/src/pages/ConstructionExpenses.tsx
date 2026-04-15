@@ -122,7 +122,7 @@ export default function ConstructionExpenses() {
                     {(() => {
                       const map: Record<string, { label: string; cls: string }> = {
                         ACTIVE: { label: "กำลังทำ", cls: "bg-yellow-100 text-yellow-800" },
-                        DONE: { label: "เสร็จแล้ว", cls: "bg-green-100 text-green-800" },
+                        DONE: { label: "จบงาน", cls: "bg-green-100 text-green-800" },
                         CANCELLED: { label: "ยกเลิก", cls: "bg-red-100 text-red-700" },
                       };
                       const s = map[p.status] ?? { label: p.status, cls: "bg-slate-100 text-slate-700" };
@@ -396,7 +396,7 @@ function EditProjectModal({
         <Field label="สถานะ">
           <select value={status} onChange={(e) => setStatus(e.target.value)} className="input">
             <option value="ACTIVE">กำลังทำ</option>
-            <option value="DONE">เสร็จแล้ว</option>
+            <option value="DONE">จบงาน</option>
             <option value="CANCELLED">ยกเลิก</option>
           </select>
         </Field>
