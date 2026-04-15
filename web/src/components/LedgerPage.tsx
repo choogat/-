@@ -286,11 +286,11 @@ export default function LedgerPage({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:col-span-3">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:col-span-3">
           {!hideIncome && (
-            <div className="card">
-              <div className="text-sm text-slate-500">รายรับรวม</div>
-              <div className="text-2xl font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
+            <div className="card py-2 px-3">
+              <div className="text-xs text-slate-500">รายรับรวม</div>
+              <div className="text-base font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
             </div>
           )}
           {(() => {
@@ -304,9 +304,9 @@ export default function LedgerPage({
               .map((cat) => [cat, expenseByCategory[cat] ?? 0] as const)
               .sort((a, b) => b[1] - a[1])
               .map(([cat, amt]) => (
-                <div key={cat} className="card">
-                  <div className="text-sm text-slate-500">{cat}</div>
-                  <div className={`text-xl font-bold ${amt > 0 ? "text-rose-600" : "text-slate-400"}`}>
+                <div key={cat} className="card py-2 px-3">
+                  <div className="text-xs text-slate-500 truncate">{cat}</div>
+                  <div className={`text-base font-bold ${amt > 0 ? "text-rose-600" : "text-slate-400"}`}>
                     ฿{amt.toLocaleString()}
                   </div>
                 </div>
