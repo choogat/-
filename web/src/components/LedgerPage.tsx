@@ -74,7 +74,7 @@ export default function LedgerPage({
 
   const save = useMutation({
     mutationFn: async () => {
-      const noteText = form.category === "สิ่งของ" && form.quantity && form.quantity !== 1
+      const noteText = form.category === "สิ่งของ" && form.quantity
         ? `${form.note} จำนวน ${form.quantity}`.trim()
         : form.note;
       const note =
