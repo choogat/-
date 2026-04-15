@@ -261,8 +261,51 @@ export default function Assets() {
               <tr><td colSpan={8} className="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
             )}
           </tbody>
+          {(filtered.length > 0 || investmentItems.length > 0) && (() => {
+            const cost = filtered.reduce((s: number, a: any) => s + a.costPrice, 0)
+              + investmentItems.reduce((s, a) => s + a.costPrice, 0);
+            const accum = filtered.reduce((s: number, a: any) => s + a.accumulatedDepreciation, 0);
+            const cur = filtered.reduce((s: number, a: any) => s + a.currentValue, 0)
+              + investmentItems.reduce((s, a) => s + a.costPrice, 0);
+            return (
+              <tfoot>
+                <tr className="font-bold bg-slate-50 border-t">
+                  <td className="p-2" colSpan={4}>รวมทะเบียนทรัพย์สิน</td>
+                  <td className="p-2 text-right">฿{cost.toLocaleString()}</td>
+                  <td className="p-2 text-right">฿{accum.toLocaleString()}</td>
+                  <td className="p-2 text-right text-indigo-700">฿{cur.toLocaleString()}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            );
+          })()}
         </table>
       </div>
+
+      {(() => {
+        const regCost = filtered.reduce((s: number, a: any) => s + a.costPrice, 0)
+          + investmentItems.reduce((s, a) => s + a.costPrice, 0);
+        const conCost = constructionAssets.reduce((s: number, a: any) => s + a.costPrice, 0);
+        const regCur = filtered.reduce((s: number, a: any) => s + a.currentValue, 0)
+          + investmentItems.reduce((s, a) => s + a.costPrice, 0);
+        const conCur = constructionAssets.reduce((s: number, a: any) => s + a.currentValue, 0);
+        return (
+          <div className="card bg-indigo-50 border-indigo-200 grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-sm text-slate-600">ยอดรวมราคาทุน (ทุกหมวด)</div>
+              <div className="text-2xl font-bold text-indigo-700">
+                ฿{(regCost + conCost).toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-slate-600">ยอดรวมมูลค่าปัจจุบัน (ทุกหมวด)</div>
+              <div className="text-2xl font-bold text-indigo-700">
+                ฿{(regCur + conCur).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="card">
         <h2 className="text-lg font-bold mb-2">ทรัพย์สินจากค่าใช้จ่ายก่อสร้าง</h2>
