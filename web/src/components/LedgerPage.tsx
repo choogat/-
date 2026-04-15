@@ -221,7 +221,7 @@ export default function LedgerPage({
         </div>
       </div>
 
-      <div className="card flex items-center gap-2 flex-nowrap overflow-x-auto">
+      <div className="card flex items-center gap-2 flex-nowrap overflow-x-auto w-full md:w-4/5">
         <label className="label mb-0">ดูย้อนหลังรายเดือน</label>
         <select
           className="input w-40"
