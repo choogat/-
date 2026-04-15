@@ -98,7 +98,7 @@ export default function ConstructionExpenses() {
               const pct = p.budget > 0 ? (p.paid / p.budget) * 100 : 0;
               return (
                 <tr key={p.id} className="border-t hover:bg-slate-50">
-                  <td className="p-3 font-medium">{p.name}</td>
+                  <td className="p-3 font-medium whitespace-nowrap">{p.name}</td>
                   <td className="p-3">{p.contractor ?? "-"}</td>
                   <td className="p-3 text-right">{fmt(p.budget)}</td>
                   <td className="p-3 text-right text-green-700">{fmt(p.paid)}</td>
