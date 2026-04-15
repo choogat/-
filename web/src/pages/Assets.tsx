@@ -214,39 +214,30 @@ export default function Assets() {
         </form>
       )}
 
-      <div className="card flex flex-wrap gap-3 items-end">
-        <label className="flex flex-col text-sm">
-          ค้นหา
-          <input className="border rounded p-2" placeholder="รหัส / ชื่อ / ที่ตั้ง"
-            value={search} onChange={(e) => setSearch(e.target.value)} />
-        </label>
-        <label className="flex flex-col text-sm">
-          หมวด
-          <select className="border rounded p-2" value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}>
-            <option value="">ทั้งหมด</option>
-            {categories.map((c: any) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col text-sm">
-          สถานะ
-          <select className="border rounded p-2" value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="">ทั้งหมด</option>
-            <option value="IN_USE">ใช้งาน</option>
-            <option value="REPAIR">ซ่อม</option>
-            <option value="DISPOSED">จำหน่ายแล้ว</option>
-          </select>
-        </label>
+      <div className="card py-2 flex flex-wrap gap-2 items-center text-sm">
+        <input className="border rounded px-2 py-1" placeholder="ค้นหา รหัส / ชื่อ / ที่ตั้ง"
+          value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select className="border rounded px-2 py-1" value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}>
+          <option value="">หมวด: ทั้งหมด</option>
+          {categories.map((c: any) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <select className="border rounded px-2 py-1" value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}>
+          <option value="">สถานะ: ทั้งหมด</option>
+          <option value="IN_USE">ใช้งาน</option>
+          <option value="REPAIR">ซ่อม</option>
+          <option value="DISPOSED">จำหน่ายแล้ว</option>
+        </select>
         {(filterCategory || filterStatus || search) && (
-          <button className="px-3 py-2 text-sm text-gray-600 underline"
+          <button className="text-gray-600 underline"
             onClick={() => { setFilterCategory(""); setFilterStatus(""); setSearch(""); }}>
             ล้างตัวกรอง
           </button>
         )}
-        <div className="ml-auto text-sm text-gray-600 self-center">
+        <div className="ml-auto text-gray-600">
           พบ {filtered.length} / {data.length} รายการ
         </div>
       </div>
