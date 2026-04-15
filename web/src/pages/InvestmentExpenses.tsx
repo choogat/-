@@ -17,7 +17,7 @@ type ConstructionInstallment = {
 };
 
 const SETTING_KEY = "INVESTMENT_CATEGORIES";
-const DEFAULT_CATEGORIES = ["เงินสด", "โครงสร้าง", "สิ่งของ", "ของใช้", "อื่นๆ"];
+const DEFAULT_CATEGORIES = ["เงินสด", "โครงสร้าง", "สิ่งของ", "ของใช้", "ภาษี", "อื่นๆ"];
 
 export default function InvestmentExpenses() {
   const qc = useQueryClient();
