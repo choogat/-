@@ -249,7 +249,7 @@ export default function Assets() {
               <tr key={a.id} className="border-b bg-amber-50/40">
                 <td className="p-2 font-mono">{a.code}</td>
                 <td className="p-2">สิ่งของ</td>
-                <td className="p-2">{a.name}{a.party ? ` — ${a.party}` : ""}</td>
+                <td className="p-2">{a.name}</td>
                 <td className="p-2">{dayjs(a.acquireDate).format("DD/MM/YYYY")}</td>
                 <td className="p-2 text-right">฿{a.costPrice.toLocaleString()}</td>
                 <td className="p-2 text-right text-slate-400">-</td>
