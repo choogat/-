@@ -183,6 +183,12 @@ export default function LedgerPage({
           .some((v) => String(v).toLowerCase().includes(filterText.toLowerCase())))
   );
 
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedRows = visibleRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const totalIncome = visibleRows.reduce((s, r) => s + r.income, 0);
   const totalExpense = visibleRows.reduce((s, r) => s + r.expense, 0);
   const net = totalIncome - totalExpense;
@@ -331,7 +337,7 @@ export default function LedgerPage({
             {visibleRows.length === 0 && (
               <tr><td className="p-4 text-center text-slate-400" colSpan={(showPartyColumn ? 5 : 4) + (hideIncome ? 1 : 3)}>ไม่มีข้อมูล</td></tr>
             )}
-            {visibleRows.map((r) => {
+            {pagedRows.map((r) => {
               const diff = r.income - r.expense;
               return (
                 <tr key={r.id} className="border-b align-top">
@@ -415,6 +421,25 @@ export default function LedgerPage({
             </tr>
           </tfoot>
         </table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end gap-2 pt-3 text-sm">
+            <button
+              className="btn-secondary px-2 py-1 disabled:opacity-40"
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              ก่อนหน้า
+            </button>
+            <span>หน้า {currentPage} / {totalPages}</span>
+            <button
+              className="btn-secondary px-2 py-1 disabled:opacity-40"
+              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              ถัดไป
+            </button>
+          </div>
+        )}
       </div>
 
       {confirmDelId !== null && (
