@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { api } from "../lib/api";
 
 type Mode = "INCOME" | "EXPENSE";
@@ -285,39 +286,124 @@ export default function LedgerPage({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:col-span-3">
-          {!hideIncome && (
-            <div className="card py-2 px-3">
-              <div className="text-xs text-slate-500">รายรับรวม</div>
-              <div className="text-base font-bold text-emerald-600">฿{totalIncome.toLocaleString()}</div>
+      <div className="flex flex-wrap gap-3">
+        {!hideIncome && (
+          <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 px-4 py-3 shadow-sm w-full sm:w-56">
+            <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-emerald-200/40 blur-2xl" />
+            <div className="relative flex items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                  <TrendingUp className="h-4 w-4" />
+                  รายรับรวม
+                </div>
+                <div className="mt-1 text-sm font-bold tracking-tight text-emerald-700">
+                  ฿{totalIncome.toLocaleString()}
+                </div>
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-200">
+                <TrendingUp className="h-4 w-4" />
+              </div>
             </div>
-          )}
-          {(() => {
-            const allCats = Array.from(
-              new Set([
-                ...(categoryOptions ?? []),
-                ...visibleRows.map((r) => r.category).filter(Boolean) as string[],
-              ])
-            );
-            return allCats
-              .map((cat) => [cat, expenseByCategory[cat] ?? 0] as const)
-              .sort((a, b) => b[1] - a[1])
-              .map(([cat, amt]) => (
-                <div key={cat} className="card py-2 px-3">
+          </div>
+        )}
+        <div className="relative overflow-hidden rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 via-rose-50 to-orange-50 px-4 py-3 shadow-sm w-full sm:w-56">
+          <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-rose-200/40 blur-2xl" />
+          <div className="relative flex items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1.5 text-sm font-medium text-rose-700">
+                <TrendingDown className="h-4 w-4" />
+                รายจ่ายรวม
+              </div>
+              <div className="mt-1 text-sm font-bold tracking-tight text-rose-700">
+                ฿{totalExpense.toLocaleString()}
+              </div>
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 ring-1 ring-rose-200">
+              <TrendingDown className="h-4 w-4" />
+            </div>
+          </div>
+        </div>
+        {!hideIncome && (
+          <div
+            className={`relative overflow-hidden rounded-xl border px-4 py-3 shadow-sm w-full sm:w-56 ${
+              net >= 0
+                ? "border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-cyan-50"
+                : "border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50"
+            }`}
+          >
+            <div
+              className={`absolute -right-3 -top-3 h-16 w-16 rounded-full blur-2xl ${
+                net >= 0 ? "bg-indigo-200/40" : "bg-amber-200/40"
+              }`}
+            />
+            <div className="relative flex items-center justify-between gap-2">
+              <div>
+                <div
+                  className={`flex items-center gap-1.5 text-sm font-medium ${
+                    net >= 0 ? "text-indigo-700" : "text-amber-700"
+                  }`}
+                >
+                  <Wallet className="h-4 w-4" />
+                  คงเหลือสุทธิ
+                </div>
+                <div
+                  className={`mt-1 text-sm font-bold tracking-tight ${
+                    net >= 0 ? "text-indigo-700" : "text-amber-700"
+                  }`}
+                >
+                  ฿{net.toLocaleString()}
+                </div>
+              </div>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-lg ring-1 ${
+                  net >= 0
+                    ? "bg-indigo-500/10 text-indigo-600 ring-indigo-200"
+                    : "bg-amber-500/10 text-amber-600 ring-amber-200"
+                }`}
+              >
+                <Wallet className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {(() => {
+        const allCats = Array.from(
+          new Set([
+            ...(categoryOptions ?? []),
+            ...(visibleRows.map((r) => r.category).filter(Boolean) as string[]),
+          ])
+        );
+        if (allCats.length === 0) return null;
+        const sorted = allCats
+          .map((cat) => [cat, expenseByCategory[cat] ?? 0] as const)
+          .sort((a, b) => b[1] - a[1]);
+        return (
+          <div className="card py-3">
+            <div className="text-xs font-medium text-slate-500 mb-2">
+              แยกตาม{categoryLabel ?? "หมวด"}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {sorted.map(([cat, amt]) => (
+                <div
+                  key={cat}
+                  className="rounded-lg border border-slate-200 bg-slate-50/50 py-2 px-3"
+                >
                   <div className="text-xs text-slate-500 truncate">{cat}</div>
-                  <div className={`text-base font-bold ${amt > 0 ? "text-rose-600" : "text-slate-400"}`}>
+                  <div
+                    className={`text-base font-bold ${
+                      amt > 0 ? "text-rose-600" : "text-slate-400"
+                    }`}
+                  >
                     ฿{amt.toLocaleString()}
                   </div>
                 </div>
-              ));
-          })()}
-        </div>
-        <div className="card bg-rose-50 border-rose-200 flex flex-col justify-center items-center text-center">
-          <div className="text-2xl font-semibold text-slate-700">รายจ่ายรวม</div>
-          <div className="text-2xl font-bold text-rose-600 mt-3">฿{totalExpense.toLocaleString()}</div>
-        </div>
-      </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
