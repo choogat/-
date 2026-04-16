@@ -429,7 +429,7 @@ export default function LedgerPage({
                 <tr key={r.id} className="border-b align-top">
                   <td className="p-2">{dayjs(r.date).format("DD/MM/YYYY")}</td>
                   {showPartyColumn && <td className="p-2">{r.party}</td>}
-                  <td className="p-2">{r.category || "-"}</td>
+                  <td className="p-2">{r.category || r.party || "-"}</td>
                   <td className="p-2 text-slate-600">{r.detail || "-"}</td>
                   {!hideIncome && (
                     <td className="p-2 text-right text-emerald-600">
