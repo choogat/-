@@ -251,7 +251,7 @@ export default function LedgerPage({
         )}
         {showPartyFilter && (
           <>
-            <label className="label mb-0 ml-2">{partyLabel ?? "ผู้จ่าย"}</label>
+            <label className="label mb-0 ml-2">{partyLabel ?? "ประเภท"}</label>
             <select
               className="input w-40 py-1"
               value={filterParty}
@@ -410,7 +410,7 @@ export default function LedgerPage({
           <thead className="text-left border-b">
             <tr>
               <th className="p-2">วันที่</th>
-              {showPartyColumn && <th className="p-2">{partyLabel ?? "ผู้รับเงิน"}</th>}
+              {showPartyColumn && <th className="p-2">{partyLabel ?? "ประเภท"}</th>}
               <th className="p-2">{categoryLabel ?? "ประเภท"}</th>
               <th className="p-2">รายละเอียด</th>
               {!hideIncome && <th className="p-2 text-right">รายรับ</th>}
