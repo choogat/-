@@ -602,15 +602,17 @@ export default function LedgerPage({
                   required
                 />
               </div>
-              <div>
-                <label className="label">ผู้รับเงิน</label>
-                <input
-                  className="input"
-                  value={form.recipient}
-                  onChange={(e) => setForm({ ...form, recipient: e.target.value })}
-                  placeholder="ชื่อผู้รับเงิน (ไม่บังคับ)"
-                />
-              </div>
+              {!showPartyColumn && (
+                <div>
+                  <label className="label">ผู้รับเงิน</label>
+                  <input
+                    className="input"
+                    value={form.recipient}
+                    onChange={(e) => setForm({ ...form, recipient: e.target.value })}
+                    placeholder="ชื่อผู้รับเงิน (ไม่บังคับ)"
+                  />
+                </div>
+              )}
               {categoryOptions && categoryOptions.length > 0 && (
                 <div>
                   <label className="label">{categoryLabel ?? "หมวด"}</label>
