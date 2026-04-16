@@ -226,6 +226,7 @@ model Expense {
 
 model ConstructionProject {
   id          Int       @id @default(autoincrement())
+  code        String?
   name        String
   contractor  String?
   budget      Float

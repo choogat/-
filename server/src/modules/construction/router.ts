@@ -25,6 +25,7 @@ constructionRouter.get(
         : p.expenses.reduce((s, e: any) => s + (e.isAsset ? e.amount : 0), 0);
       return {
         id: p.id,
+        code: (p as any).code ?? null,
         name: p.name,
         contractor: p.contractor,
         budget: p.budget,
@@ -50,6 +51,7 @@ constructionRouter.post(
   ah(async (req, res) => {
     const body = z
       .object({
+        code: z.string().optional().nullable(),
         name: z.string().min(1),
         contractor: z.string().optional().nullable(),
         budget: z.number().nonnegative(),
@@ -61,6 +63,7 @@ constructionRouter.post(
       .parse(req.body);
     const item = await prisma.constructionProject.create({
       data: {
+        code: body.code || null,
         name: body.name,
         contractor: body.contractor || null,
         budget: body.budget,
@@ -81,6 +84,7 @@ constructionRouter.patch(
     const id = Number(req.params.id);
     const b = req.body as any;
     const data: any = {};
+    if (b.code !== undefined) data.code = b.code || null;
     if (b.name !== undefined) data.name = b.name;
     if (b.contractor !== undefined) data.contractor = b.contractor || null;
     if (b.budget !== undefined) data.budget = Number(b.budget);

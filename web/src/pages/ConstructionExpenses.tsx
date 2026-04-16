@@ -5,6 +5,7 @@ import { api } from "../lib/api";
 
 type Project = {
   id: number;
+  code: string | null;
   name: string;
   contractor: string | null;
   budget: number;
@@ -80,6 +81,8 @@ export default function ConstructionExpenses() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left">
             <tr>
+              <th className="p-3 text-center">ลำดับ</th>
+              <th className="p-3">หมายเลขโครงการ</th>
               <th className="p-3">โครงการ</th>
               <th className="p-3">ผู้รับเหมา</th>
               <th className="p-3 text-right">ยอดรวม</th>
@@ -94,10 +97,12 @@ export default function ConstructionExpenses() {
             </tr>
           </thead>
           <tbody>
-            {projectsQ.data?.map((p) => {
+            {projectsQ.data?.map((p, idx) => {
               const pct = p.budget > 0 ? (p.paid / p.budget) * 100 : 0;
               return (
                 <tr key={p.id} className="border-t hover:bg-slate-50">
+                  <td className="p-3 text-center text-slate-500">{idx + 1}</td>
+                  <td className="p-3 font-mono text-sm whitespace-nowrap">{p.code ?? "-"}</td>
                   <td className="p-3 font-medium whitespace-nowrap">{p.name}</td>
                   <td className="p-3">{p.contractor ?? "-"}</td>
                   <td className="p-3 text-right">{fmt(p.budget)}</td>
@@ -162,7 +167,7 @@ export default function ConstructionExpenses() {
             })}
             {projectsQ.data?.length === 0 && (
               <tr>
-                <td colSpan={11} className="p-6 text-center text-slate-500">
+                <td colSpan={13} className="p-6 text-center text-slate-500">
                   ยังไม่มีโครงการ — กด "+ เพิ่มโครงการ" เพื่อเริ่ม
                 </td>
               </tr>
@@ -244,6 +249,7 @@ function SummaryCard({ label, value, color }: { label: string; value: string; co
 }
 
 function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [contractor, setContractor] = useState("");
   const [budget, setBudget] = useState("");
@@ -254,6 +260,7 @@ function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const save = useMutation({
     mutationFn: async () => {
       await api.post("/construction/projects", {
+        code: code || null,
         name,
         contractor: contractor || null,
         budget: Number(budget),
@@ -272,6 +279,14 @@ function AddProjectModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
   return (
     <Modal title="เพิ่มโครงการก่อสร้าง" onClose={onClose}>
       <div className="space-y-3">
+        <Field label="หมายเลขโครงการ">
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="input"
+            placeholder="เช่น CON-2026-001"
+          />
+        </Field>
         <Field label="ชื่อโครงการ *">
           <input
             value={name}
@@ -347,6 +362,7 @@ function EditProjectModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [code, setCode] = useState(project.code ?? "");
   const [name, setName] = useState(project.name);
   const [contractor, setContractor] = useState(project.contractor ?? "");
   const [budget, setBudget] = useState(String(project.budget));
@@ -358,6 +374,7 @@ function EditProjectModal({
   const save = useMutation({
     mutationFn: async () => {
       await api.patch(`/construction/projects/${project.id}`, {
+        code: code || null,
         name,
         contractor: contractor || null,
         budget: Number(budget),
@@ -377,6 +394,9 @@ function EditProjectModal({
   return (
     <Modal title="แก้ไขโครงการก่อสร้าง" onClose={onClose}>
       <div className="space-y-3">
+        <Field label="หมายเลขโครงการ">
+          <input value={code} onChange={(e) => setCode(e.target.value)} className="input" />
+        </Field>
         <Field label="ชื่อโครงการ *">
           <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
         </Field>
