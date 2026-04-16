@@ -36,13 +36,19 @@ utilityLedgerRouter.post(
         kind: z.enum(["INCOME", "EXPENSE"]),
         utilityType: z.string().min(1),
         party: z.string().min(1),
+        recipient: z.string().optional().nullable(),
         amount: z.number().positive(),
         note: z.string().optional(),
       })
       .parse(req.body);
     const period = dayjs(body.date).format("YYYY-MM");
     const item = await (prisma as any).utilityLedger.create({
-      data: { ...body, date: new Date(body.date), period },
+      data: {
+        ...body,
+        recipient: body.recipient || null,
+        date: new Date(body.date),
+        period,
+      },
     });
     res.status(201).json(item);
   })
@@ -56,6 +62,7 @@ utilityLedgerRouter.patch(
       .object({
         date: z.string().optional(),
         party: z.string().optional(),
+        recipient: z.string().optional().nullable(),
         amount: z.number().positive().optional(),
         note: z.string().optional().nullable(),
       })
@@ -66,6 +73,7 @@ utilityLedgerRouter.patch(
       data.period = dayjs(body.date).format("YYYY-MM");
     }
     if (body.party !== undefined) data.party = body.party;
+    if (body.recipient !== undefined) data.recipient = body.recipient || null;
     if (body.amount !== undefined) data.amount = body.amount;
     if (body.note !== undefined) data.note = body.note ?? null;
     const item = await (prisma as any).utilityLedger.update({

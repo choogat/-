@@ -285,7 +285,8 @@ model UtilityLedger {
   period       String   // YYYY-MM
   kind         String   // INCOME | EXPENSE
   utilityType  String   // WATER | ELECTRIC
-  party        String   // รับจาก / จ่ายไป
+  party        String   // ประเภท
+  recipient    String?  // ผู้รับเงิน / ผู้จ่าย
   amount       Float
   note         String?
   createdAt    DateTime @default(now())

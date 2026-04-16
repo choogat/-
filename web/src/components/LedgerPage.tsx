@@ -57,6 +57,7 @@ export default function LedgerPage({
   const [form, setForm] = useState({
     date: dayjs().format("YYYY-MM-DD"),
     party: "",
+    recipient: "",
     amount: 0,
     note: "",
     category: categoryOptions?.[0] ?? "",
@@ -67,6 +68,7 @@ export default function LedgerPage({
     setForm({
       date: dayjs().format("YYYY-MM-DD"),
       party: "",
+      recipient: "",
       amount: 0,
       note: "",
       category: categoryOptions?.[0] ?? "",
@@ -88,6 +90,7 @@ export default function LedgerPage({
           await api.patch(`/utility-ledger/${editId}`, {
             date: form.date,
             party: form.party,
+            recipient: form.recipient || null,
             amount: Number(form.amount),
             note,
           })
@@ -99,6 +102,7 @@ export default function LedgerPage({
           kind: mode,
           utilityType: ledgerType,
           party: form.party,
+          recipient: form.recipient || null,
           amount: Number(form.amount),
           note,
         })
@@ -135,6 +139,7 @@ export default function LedgerPage({
       period: l.period as string,
       date: dayjs(l.date).format("YYYY-MM-DD"),
       party: l.party as string,
+      recipient: (l.recipient ?? "") as string,
       category,
       detail: noteWithoutCat,
       income: l.kind === "INCOME" ? l.amount : 0,
@@ -148,6 +153,7 @@ export default function LedgerPage({
     period: r.period,
     date: r.date,
     party: r.party ?? "",
+    recipient: "",
     category: r.category ?? "",
     detail: r.detail,
     income: r.income,
@@ -408,6 +414,7 @@ export default function LedgerPage({
           <thead className="text-left border-b">
             <tr>
               <th className="p-2">วันที่</th>
+              <th className="p-2">ผู้รับเงิน</th>
               {showPartyColumn && <th className="p-2">{partyLabel ?? "ประเภท"}</th>}
               <th className="p-2">{categoryLabel ?? "ประเภท"}</th>
               <th className="p-2">รายละเอียด</th>
@@ -419,13 +426,14 @@ export default function LedgerPage({
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
-              <tr><td className="p-4 text-center text-slate-400" colSpan={(showPartyColumn ? 5 : 4) + (hideIncome ? 1 : 3)}>ไม่มีข้อมูล</td></tr>
+              <tr><td className="p-4 text-center text-slate-400" colSpan={(showPartyColumn ? 6 : 5) + (hideIncome ? 1 : 3)}>ไม่มีข้อมูล</td></tr>
             )}
             {pagedRows.map((r) => {
               const diff = r.income - r.expense;
               return (
                 <tr key={r.id} className="border-b align-top">
                   <td className="p-2">{dayjs(r.date).format("DD/MM/YYYY")}</td>
+                  <td className="p-2">{r.recipient || "-"}</td>
                   {showPartyColumn && <td className="p-2">{r.party}</td>}
                   <td className="p-2">{r.category || r.party || "-"}</td>
                   <td className="p-2 text-slate-600">{r.detail || "-"}</td>
@@ -466,6 +474,7 @@ export default function LedgerPage({
                             setForm({
                               date: dayjs(ledgerItem.date).format("YYYY-MM-DD"),
                               party: ledgerItem.party ?? "",
+                              recipient: ledgerItem.recipient ?? "",
                               amount: ledgerItem.amount ?? 0,
                               note: noteOnly,
                               category: r.category ?? categoryOptions?.[0] ?? "",
@@ -491,7 +500,7 @@ export default function LedgerPage({
           </tbody>
           <tfoot>
             <tr className="border-t font-bold bg-slate-50">
-              <td className="p-2" colSpan={showPartyColumn ? 4 : 3}>รวมทั้งหมด</td>
+              <td className="p-2" colSpan={showPartyColumn ? 5 : 4}>รวมทั้งหมด</td>
               {!hideIncome && (
                 <td className="p-2 text-right text-emerald-600">฿{totalIncome.toLocaleString()}</td>
               )}
@@ -591,6 +600,15 @@ export default function LedgerPage({
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                   required
+                />
+              </div>
+              <div>
+                <label className="label">ผู้รับเงิน</label>
+                <input
+                  className="input"
+                  value={form.recipient}
+                  onChange={(e) => setForm({ ...form, recipient: e.target.value })}
+                  placeholder="ชื่อผู้รับเงิน (ไม่บังคับ)"
                 />
               </div>
               {categoryOptions && categoryOptions.length > 0 && (
