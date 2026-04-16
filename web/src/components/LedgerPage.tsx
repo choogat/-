@@ -612,7 +612,7 @@ export default function LedgerPage({
               )}
               <div>
                 <label className="label">
-                  {partyLabel ?? (mode === "INCOME" ? "ผู้จ่าย/ที่มา" : "ผู้รับเงิน/ที่จ่าย")}
+                  {partyLabel ?? "ประเภท"}
                 </label>
                 <input
                   className="input"
