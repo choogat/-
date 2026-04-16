@@ -136,9 +136,7 @@ export default function LedgerPage({
       date: dayjs(l.date).format("YYYY-MM-DD"),
       party: l.party as string,
       category,
-      detail: showPartyColumn
-        ? noteWithoutCat
-        : `${l.kind === "INCOME" ? "จาก" : "ให้"} ${l.party}${noteWithoutCat ? ` (${noteWithoutCat})` : ""}`,
+      detail: noteWithoutCat,
       income: l.kind === "INCOME" ? l.amount : 0,
       expense: l.kind === "EXPENSE" ? l.amount : 0,
       readonly: false as boolean,
