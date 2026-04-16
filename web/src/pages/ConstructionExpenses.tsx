@@ -105,10 +105,10 @@ export default function ConstructionExpenses() {
                   <td className="p-3 text-right">{fmt(p.budget)}</td>
                   <td className="p-3 text-right text-green-700">{fmt(p.paid)}</td>
                   <td className="p-3 text-right text-purple-700">{fmt(p.wht ?? 0)}</td>
-                  <td className="p-3 text-right font-semibold text-amber-700">
+                  <td className="p-3 text-right font-semibold text-red-600">
                     {fmt(p.remaining)}
                   </td>
-                  <td className="p-3 text-right text-amber-700">
+                  <td className="p-3 text-right text-red-600">
                     {p.budget > 0 ? ((p.remaining / p.budget) * 100).toFixed(2) : "0.00"}%
                   </td>
                   <td className="p-3 text-center">
